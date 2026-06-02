@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, constr
+from pydantic import BaseModel, ConfigDict, constr, field_serializer
 
 
 class AlertResponse(BaseModel):
@@ -23,6 +23,10 @@ class AlertResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('id', 'merchant_id', 'transaction_id')
+    def serialize_uuid(self, value: UUID | str | None, _info) -> str | None:
+        return str(value) if value else None
 
 
 class AlertListQuery(BaseModel):

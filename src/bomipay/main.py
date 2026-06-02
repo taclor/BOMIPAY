@@ -13,6 +13,9 @@ from .routes.health import router as health_router
 from .routes.merchant import router as merchant_router
 from .routes.transactions import router as transactions_router
 from .routes.webhooks import router as webhooks_router
+from .routes.providers import router as providers_router
+from .routes.reconciliation import router as reconciliation_router
+from .routes.notifications import router as notifications_router
 
 configure_logging()
 logger = logging.getLogger("bomipay")
@@ -45,6 +48,9 @@ app.include_router(auth_router, prefix="/api/v1")
 app.include_router(merchant_router, prefix="/api/v1")
 app.include_router(transactions_router, prefix="/api/v1")
 app.include_router(alerts_router, prefix="/api/v1")
+app.include_router(providers_router, prefix="/api/v1")
+app.include_router(reconciliation_router, prefix="/api/v1")
+app.include_router(notifications_router, prefix="/api/v1")
 app.include_router(webhooks_router)
 
 

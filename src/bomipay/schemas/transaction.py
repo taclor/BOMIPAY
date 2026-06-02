@@ -1,12 +1,13 @@
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, constr
+from pydantic import BaseModel, ConfigDict, constr, field_serializer
 
 
 class TransactionResponse(BaseModel):
-    id: str
-    merchant_id: str
+    id: UUID | str
+    merchant_id: UUID | str
     provider_name: str
     provider_transaction_id: str
     internal_reference: Optional[str]
@@ -30,6 +31,28 @@ class TransactionResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('id', 'merchant_id')
+    def serialize_uuid(self, value: UUID | str, _info) -> str:
+        return str(value) if value else None
+
+
+class TransactionEventResponse(BaseModel):
+    id: UUID | str
+    transaction_id: UUID | str
+    provider_name: str
+    provider_event_id: str
+    event_type: str
+    provider_payload: dict
+    status: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('id', 'transaction_id')
+    def serialize_uuid(self, value: UUID | str, _info) -> str:
+        return str(value) if value else None
 
 
 class TransactionListQuery(BaseModel):

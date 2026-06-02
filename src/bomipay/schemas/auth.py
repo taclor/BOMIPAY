@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, constr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, constr, field_serializer
 
 
 class UserRegisterRequest(BaseModel):
@@ -42,3 +42,7 @@ class UserResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('id', 'merchant_id')
+    def serialize_uuid(self, value: UUID | str | None, _info) -> str | None:
+        return str(value) if value else None

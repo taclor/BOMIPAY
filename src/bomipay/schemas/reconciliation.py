@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_serializer
 
 
 class ExpectedPaymentImportItem(BaseModel):
@@ -35,6 +35,10 @@ class ExpectedPaymentResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @field_serializer('id', 'merchant_id')
+    def serialize_uuid(self, value: UUID | str, _info) -> str:
+        return str(value) if value else None
+
 
 class ReconciliationRunCreateRequest(BaseModel):
     date_from: datetime
@@ -57,6 +61,10 @@ class ReconciliationResultResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @field_serializer('id', 'run_id', 'expected_payment_id', 'transaction_id')
+    def serialize_uuid(self, value: UUID | str | None, _info) -> str | None:
+        return str(value) if value else None
+
 
 class ReconciliationRunResponse(BaseModel):
     id: UUID | str
@@ -71,6 +79,10 @@ class ReconciliationRunResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('id', 'merchant_id')
+    def serialize_uuid(self, value: UUID | str, _info) -> str:
+        return str(value) if value else None
 
 
 class ReconciliationSummaryResponse(BaseModel):
@@ -89,6 +101,10 @@ class ReconciliationSummaryResponse(BaseModel):
     total_matched_amount: int
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('run_id', 'merchant_id')
+    def serialize_uuid(self, value: UUID | str, _info) -> str:
+        return str(value) if value else None
 
 
 class ExpectedPaymentImportResponse(BaseModel):
