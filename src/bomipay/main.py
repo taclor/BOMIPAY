@@ -16,6 +16,16 @@ from .routes.webhooks import router as webhooks_router
 from .routes.providers import router as providers_router
 from .routes.reconciliation import router as reconciliation_router
 from .routes.notifications import router as notifications_router
+from .routes.bank_accounts import router as bank_accounts_router
+from .routes.data_sources import router as data_sources_router
+from .routes.bank_statements import router as bank_statements_router
+from .routes.provider_sync import router as provider_sync_router
+from .routes.incidents import router as incidents_router
+from .routes.analytics import router as analytics_router
+from .routes.dashboard import router as dashboard_router
+from .routes.timeline import router as timeline_router
+from .routes.action_center import router as action_center_router
+from .routes.payment_graph import router as payment_graph_router
 
 configure_logging()
 logger = logging.getLogger("bomipay")
@@ -51,6 +61,16 @@ app.include_router(alerts_router, prefix="/api/v1")
 app.include_router(providers_router, prefix="/api/v1")
 app.include_router(reconciliation_router, prefix="/api/v1")
 app.include_router(notifications_router, prefix="/api/v1")
+app.include_router(bank_accounts_router, prefix="/api/v1")
+app.include_router(data_sources_router, prefix="/api/v1")
+app.include_router(bank_statements_router, prefix="/api/v1")
+app.include_router(provider_sync_router, prefix="/api/v1")
+app.include_router(incidents_router, prefix="/api/v1")
+app.include_router(analytics_router, prefix="/api/v1")
+app.include_router(dashboard_router, prefix="/api/v1")
+app.include_router(timeline_router, prefix="/api/v1")
+app.include_router(action_center_router, prefix="/api/v1")
+app.include_router(payment_graph_router, prefix="/api/v1")
 app.include_router(webhooks_router)
 
 

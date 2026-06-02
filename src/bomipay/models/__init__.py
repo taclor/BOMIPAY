@@ -17,6 +17,11 @@ from .transaction_event import TransactionEvent
 from .alert import Alert, AlertSeverity, AlertType
 from .notification import Notification
 from .user import Role, User
+from .bank_account import BankAccount, BankAccountPurpose, BankAccountStatus, BankAccountVerificationStatus
+from .data_source import DataSource, DataSourceStatus, DataSourceType
+from .bank_statement import BankStatementEntry, BankStatementImport, BankStatementImportStatus, BankStatementFileType
+from .provider_sync_job import ProviderSyncJob, ProviderSyncStatus, ProviderSyncType
+from .incident import Incident, IncidentEvent, IncidentSeverity, IncidentStatus, IncidentType
 
 __all__ = [
     "TimestampMixin",
@@ -24,6 +29,7 @@ __all__ = [
     "Merchant",
     "ProviderAccount",
     "ExpectedPayment",
+    "ExpectedPaymentImportBatch",
     "ExpectedPaymentStatus",
     "ReconciliationMatchStatus",
     "ReconciliationResult",
@@ -39,4 +45,23 @@ __all__ = [
     "Notification",
     "Role",
     "User",
+    "BankAccount",
+    "BankAccountPurpose",
+    "BankAccountStatus",
+    "BankAccountVerificationStatus",
+    "DataSource",
+    "DataSourceStatus",
+    "DataSourceType",
+    "BankStatementEntry",
+    "BankStatementImport",
+    "BankStatementImportStatus",
+    "BankStatementFileType",
+    "ProviderSyncJob",
+    "ProviderSyncStatus",
+    "ProviderSyncType",
+    "Incident",
+    "IncidentEvent",
+    "IncidentSeverity",
+    "IncidentStatus",
+    "IncidentType",
 ]

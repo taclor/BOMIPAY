@@ -1,0 +1,506 @@
+You are the lead backend engineer for Bomi Pay.
+
+We already have the core production implementation context for Bomi Pay defined:
+
+* Bomi Pay is an AI-driven payment intelligence layer above Nigerian payment providers.
+* Existing backend direction includes auth, RBAC, merchants, provider accounts, provider adapter framework, webhook ingestion, canonical transaction model, transaction events, alerts, reconciliation, disputes, AI explanation service, risk, ledger readiness, and routing readiness.
+* The current architecture already requires financial correctness, auditability, idempotency, append-only events, encrypted secrets, webhook signature verification, structured logging, tests, and production-grade backend standards.
+
+Your task now is to complete the missing backend capabilities so that Bomi Pay becomes a complete payment intelligence layer, not only a transaction dashboard.
+
+Implement the following missing modules and APIs.
+
+==================================================
+
+1. BANK ACCOUNT MANAGEMENT MODULE
+   ==================================================
+
+Goal:
+Allow merchants to register and manage their own business bank accounts used for settlement, payout, operations, and reconciliation.
+
+Implement database models, migrations, services, schemas, APIs, RBAC, audit logs, and tests.
+
+Entity: bank_accounts
+
+Fields:
+
+* id UUID
+* merchant_id UUID
+* bank_name
+* bank_code nullable
+* account_number encrypted or masked where needed
+* account_name
+* currency default NGN
+* purpose enum: settlement, operations, payout, reconciliation
+* verification_status enum: unverified, pending, verified, failed
+* status enum: active, inactive, archived
+* metadata_json
+* created_at
+* updated_at
+
+APIs:
+
+* POST /v1/bank-accounts
+* GET /v1/bank-accounts?merchant_id=
+* GET /v1/bank-accounts/{bank_account_id}
+* PATCH /v1/bank-accounts/{bank_account_id}
+* DELETE /v1/bank-accounts/{bank_account_id}
+* POST /v1/bank-accounts/{bank_account_id}/verify
+
+Rules:
+
+* Enforce merchant tenant isolation.
+* Only owner/admin/finance roles can manage bank accounts.
+* Mask account numbers in normal responses.
+* Never log full account numbers.
+* Audit all create/update/delete/verify actions.
+* Verification can be stubbed through a clean adapter interface for now.
+
+==================================================
+2. DATA SOURCE MANAGEMENT MODULE
+================================
+
+Goal:
+Give merchants visibility and control over where Bomi Pay gets payment intelligence data from.
+
+Supported data source types:
+
+* provider_api
+* provider_webhook
+* bank_statement_upload
+* csv_upload
+* erp_export
+* pos_export
+* manual_entry
+
+Entity: data_sources
+
+Fields:
+
+* id UUID
+* merchant_id UUID
+* source_type enum
+* provider_name nullable
+* display_name
+* status enum: active, inactive, error, pending_setup
+* last_sync_at nullable
+* last_success_at nullable
+* last_error_at nullable
+* last_error_message nullable
+* configuration_json
+* created_at
+* updated_at
+
+APIs:
+
+* POST /v1/data-sources
+* GET /v1/data-sources?merchant_id=
+* GET /v1/data-sources/{data_source_id}
+* PATCH /v1/data-sources/{data_source_id}
+* POST /v1/data-sources/{data_source_id}/test
+* GET /v1/data-sources/{data_source_id}/sync-status
+
+Rules:
+
+* Connect provider_accounts to data_sources.
+* Webhook endpoints should automatically register or update provider webhook data sources.
+* Data source test must not mutate financial records.
+* Audit all changes.
+* Expose health/status clearly for the frontend.
+
+==================================================
+3. BANK STATEMENT INGESTION MODULE
+==================================
+
+Goal:
+Allow merchants to upload bank statements so Bomi Pay can compare actual bank receipts against provider settlements and expected payments.
+
+Entities:
+bank_statement_imports
+
+* id UUID
+* merchant_id UUID
+* bank_account_id UUID nullable
+* file_name
+* file_type enum: csv, xlsx
+* status enum: uploaded, processing, completed, failed
+* total_rows
+* processed_rows
+* failed_rows
+* error_summary
+* created_at
+* completed_at nullable
+
+bank_statement_entries
+
+* id UUID
+* merchant_id UUID
+* import_id UUID
+* bank_account_id UUID nullable
+* entry_date
+* value_date nullable
+* description
+* reference nullable
+* debit_amount_minor integer default 0
+* credit_amount_minor integer default 0
+* currency
+* balance_after_minor nullable
+* counterparty_name nullable
+* raw_row_json
+* normalized_hash
+* created_at
+
+APIs:
+
+* POST /v1/bank-statements/import
+* GET /v1/bank-statements/imports?merchant_id=
+* GET /v1/bank-statements/imports/{import_id}
+* GET /v1/bank-statements/imports/{import_id}/entries
+* GET /v1/bank-statements/entries?merchant_id=&date_from=&date_to=
+
+Rules:
+
+* Use minor units for money.
+* Store raw row and normalized row.
+* Use normalized_hash for idempotency and duplicate protection.
+* Do not overwrite existing entries destructively.
+* Failed rows must be traceable.
+* Add parser service with CSV first and XLSX-ready interface.
+* Add tests for duplicate uploads, invalid rows, and tenant isolation.
+
+==================================================
+4. PROVIDER SYNC JOBS / POLLING MODULE
+======================================
+
+Goal:
+Do not rely only on webhooks. Bomi Pay must also poll provider APIs for transactions, settlements, transfers, refunds, and provider health.
+
+Entity: provider_sync_jobs
+
+Fields:
+
+* id UUID
+* merchant_id UUID
+* provider_account_id UUID
+* sync_type enum: transactions, settlements, transfers, refunds, provider_health
+* status enum: queued, running, completed, failed, cancelled
+* date_from nullable
+* date_to nullable
+* started_at nullable
+* completed_at nullable
+* records_seen integer
+* records_created integer
+* records_updated integer
+* error_message nullable
+* correlation_id
+* created_at
+
+APIs:
+
+* POST /v1/providers/{provider_account_id}/sync/transactions
+* POST /v1/providers/{provider_account_id}/sync/settlements
+* POST /v1/providers/{provider_account_id}/sync/transfers
+* POST /v1/providers/{provider_account_id}/sync/refunds
+* GET /v1/providers/{provider_account_id}/sync-jobs
+* GET /v1/provider-sync-jobs/{job_id}
+
+Rules:
+
+* Sync jobs must be idempotent.
+* Use provider adapter interface.
+* Store raw provider responses before normalization.
+* Sync results must publish canonical events.
+* Webhook and polling data must converge into the same canonical transaction model.
+* Add tests for duplicate sync, provider timeout, partial failure, and retry safety.
+
+==================================================
+5. INCIDENT CENTER MODULE
+=========================
+
+Goal:
+Convert payment problems into operational incidents that users can acknowledge, investigate, and resolve.
+
+Entity: incidents
+
+Fields:
+
+* id UUID
+* merchant_id UUID
+* title
+* incident_type enum: provider_failure_spike, settlement_delay, webhook_failure, reconciliation_mismatch, duplicate_payment_risk, hanging_transaction, bank_statement_mismatch
+* severity enum: low, medium, high, critical
+* status enum: open, acknowledged, investigating, resolved, closed
+* provider_name nullable
+* affected_amount_minor
+* affected_transaction_count
+* started_at
+* ended_at nullable
+* summary
+* ai_summary nullable
+* created_at
+* updated_at
+
+Entity: incident_events
+
+* id UUID
+* incident_id UUID
+* event_type
+* actor_user_id nullable
+* message
+* metadata_json
+* created_at
+
+APIs:
+
+* GET /v1/incidents?merchant_id=&status=&severity=
+* GET /v1/incidents/{incident_id}
+* POST /v1/incidents/{incident_id}/acknowledge
+* POST /v1/incidents/{incident_id}/resolve
+* POST /v1/incidents/{incident_id}/events
+
+Rules:
+
+* Alerts can create incidents.
+* Multiple related alerts can be grouped into one incident.
+* Incident timeline must be append-only.
+* AI may summarize incident but must not resolve it automatically.
+* Audit all status changes.
+* Add tests for incident creation, grouping, acknowledgement, resolution, and RBAC.
+
+==================================================
+6. MONEY-AT-RISK INTELLIGENCE MODULE
+====================================
+
+Goal:
+Give merchants one simple answer: how much money may be stuck, failed, delayed, duplicated, mismatched, or unresolved.
+
+Implement analytics services and APIs.
+
+API:
+
+* GET /v1/analytics/money-at-risk?merchant_id=&date_from=&date_to=
+
+Response should include:
+
+* total_money_at_risk_minor
+* failed_payments_amount_minor
+* hanging_payments_amount_minor
+* unsettled_successful_payments_amount_minor
+* settlement_mismatch_amount_minor
+* duplicate_payment_risk_amount_minor
+* unresolved_dispute_amount_minor
+* affected_transaction_count
+* top_providers_by_risk
+* top_incidents
+* recommended_actions
+
+Rules:
+
+* All calculations must be deterministic.
+* AI can generate recommended_actions but numeric values must come from database queries.
+* Include tests for calculation correctness.
+* Do not use floating point.
+
+==================================================
+7. PAYMENT GRAPH / ONTOLOGY API MODULE
+======================================
+
+Goal:
+Expose the Bomi Pay intelligence graph so the frontend and AI assistant can understand the complete payment journey.
+
+Graph relationships:
+Customer -> Payment Request -> Transaction -> Transaction Events -> Settlement -> Bank Statement Entry -> Reconciliation Result -> Dispute -> Incident -> Alert
+
+APIs:
+
+* GET /v1/payment-graph/transactions/{transaction_id}
+* GET /v1/payment-graph/customers/{customer_id}
+* GET /v1/payment-graph/incidents/{incident_id}
+* GET /v1/payment-graph/merchants/{merchant_id}/overview
+
+Response format:
+Return nodes and edges.
+
+Example:
+{
+"nodes": [
+{"id": "...", "type": "transaction", "label": "Transaction"},
+{"id": "...", "type": "settlement", "label": "Settlement"},
+{"id": "...", "type": "dispute", "label": "Dispute"}
+],
+"edges": [
+{"from": "...", "to": "...", "relationship": "belongs_to"},
+{"from": "...", "to": "...", "relationship": "created_dispute"}
+]
+}
+
+Rules:
+
+* Start with PostgreSQL relational graph queries.
+* Do not introduce graph database yet.
+* Enforce tenant isolation.
+* This API is read-only.
+* AI assistant must use this graph as retrieval context for payment explanations.
+* Add tests for graph completeness and unauthorized access.
+
+==================================================
+8. USER EXPERIENCE BACKEND SUPPORT
+==================================
+
+Goal:
+Support a frontend experience where the merchant can SEE, UNDERSTAND, ACT, and OPTIMIZE.
+
+Add backend support for the following user-facing screens:
+
+A. Mission Control Dashboard
+API:
+
+* GET /v1/dashboard/mission-control?merchant_id=
+
+Must return:
+
+* payment success rate
+* failed transaction count
+* money at risk
+* pending settlements
+* open incidents
+* provider health summary
+* reconciliation status
+* AI insight summary
+
+B. Unified Payment Timeline
+API:
+
+* GET /v1/timeline/payments?merchant_id=&date_from=&date_to=&status=&provider=
+
+Must return normalized mixed events:
+
+* transaction created
+* webhook received
+* provider status changed
+* settlement received
+* dispute opened
+* incident created
+* bank statement entry matched
+
+C. Action Center
+API:
+
+* GET /v1/action-center?merchant_id=
+
+Must return prioritized actions:
+
+* investigate failed payment
+* upload bank statement
+* resolve unmatched settlement
+* acknowledge incident
+* open dispute
+* check provider sync failure
+
+Rules:
+
+* User-facing APIs must be fast and paginated where needed.
+* Use service-layer aggregations, not controller logic.
+* Add tests for dashboard calculations and tenant isolation.
+
+==================================================
+9. AI ASSISTANT EXTENSION
+=========================
+
+Goal:
+Extend AI assistant so it uses the new intelligence modules.
+
+Enhance AI context retrieval with:
+
+* payment graph
+* incidents
+* money-at-risk analytics
+* bank statement entries
+* provider sync job history
+* data source health
+
+New AI queries to support:
+
+* “Why is my money at risk?”
+* “Which provider is causing most problems?”
+* “Which bank account has settlement mismatch?”
+* “What should I do first today?”
+* “Show me all unresolved money issues.”
+* “Why is this settlement not matching my bank statement?”
+
+Rules:
+
+* AI must not invent facts.
+* AI must cite internal record IDs in structured metadata.
+* AI must return confidence score.
+* AI must return suggested actions separately from facts.
+* AI must not mutate financial state.
+* Add tests to ensure AI response uses retrieved records only.
+
+==================================================
+10. IMPLEMENTATION REQUIREMENTS
+===============================
+
+For every module:
+
+* create migrations
+* create SQLAlchemy models or existing ORM-compatible models
+* create Pydantic schemas
+* create repository layer
+* create service layer
+* create FastAPI routes
+* enforce RBAC
+* enforce tenant isolation
+* add structured logs
+* add audit logs
+* add unit tests
+* add integration tests
+* update OpenAPI tags
+* update seed/sample data where useful
+
+Do not build fake business logic inside controllers.
+Do not bypass existing provider adapter pattern.
+Do not use floats for money.
+Do not log sensitive data.
+Do not make AI authoritative for financial truth.
+
+==================================================
+11. PRIORITY ORDER
+==================
+
+Implement in this order:
+
+1. Bank Account Management
+2. Data Source Management
+3. Bank Statement Import
+4. Provider Sync Jobs
+5. Incident Center
+6. Money-at-Risk Analytics
+7. Mission Control Dashboard
+8. Unified Payment Timeline
+9. Action Center
+10. Payment Graph / Ontology API
+11. AI Assistant Extension
+
+==================================================
+12. DEFINITION OF DONE
+======================
+
+This extension is complete only when:
+
+* merchants can add and manage bank accounts
+* merchants can see connected data sources and their health
+* merchants can upload bank statements
+* provider data can enter through both webhooks and polling
+* transactions, settlements, bank entries, disputes, alerts, and incidents are connected
+* dashboard shows real operational intelligence
+* money-at-risk is calculated
+* incidents can be investigated and resolved
+* payment graph API exposes relationships
+* AI assistant can explain payment issues using the graph and records
+* all APIs enforce tenant isolation and RBAC
+* all financial operations are auditable
+* duplicate processing is safe
+* tests pass
+
+Build this as a production-grade backend extension to the existing Bomi Pay architecture.
