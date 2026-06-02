@@ -1,0 +1,335 @@
+BOMI PAY DATABASE SCHEMA PACK
+
+========================================
+1. OVERVIEW
+========================================
+This schema defines the core data structure for Bomi Pay,
+an AI-driven payment intelligence and orchestration platform.
+
+Database Type: PostgreSQL (Primary)
+Supporting: Redis (cache), Object Storage (files), Warehouse (analytics)
+
+========================================
+2. CORE TABLES
+========================================
+
+----------------------------
+USERS
+----------------------------
+id (PK)
+email
+password_hash
+full_name
+phone
+status
+created_at
+updated_at
+
+----------------------------
+ROLES
+----------------------------
+id (PK)
+name
+description
+
+----------------------------
+USER_ROLES
+----------------------------
+id (PK)
+user_id (FK -> users.id)
+role_id (FK -> roles.id)
+
+----------------------------
+MERCHANTS
+----------------------------
+id (PK)
+name
+business_type
+email
+phone
+country
+status
+created_at
+updated_at
+
+----------------------------
+MERCHANT_MEMBERS
+----------------------------
+id (PK)
+merchant_id (FK)
+user_id (FK)
+role
+created_at
+
+----------------------------
+PROVIDER_ACCOUNTS
+----------------------------
+id (PK)
+merchant_id (FK)
+provider_name
+api_key_encrypted
+secret_encrypted
+status
+created_at
+updated_at
+
+========================================
+3. TRANSACTION DOMAIN
+========================================
+
+----------------------------
+TRANSACTIONS
+----------------------------
+id (PK)
+merchant_id (FK)
+provider_name
+provider_transaction_id
+internal_reference
+external_reference
+payment_type
+payment_channel
+currency
+amount
+fee_amount
+net_amount
+status
+status_reason
+initiated_at
+confirmed_at
+settled_at
+customer_name
+customer_email
+customer_phone
+metadata_json
+created_at
+updated_at
+
+----------------------------
+TRANSACTION_EVENTS
+----------------------------
+id (PK)
+transaction_id (FK)
+event_type
+provider_payload
+status
+created_at
+
+----------------------------
+PAYMENT_REQUESTS
+----------------------------
+id (PK)
+merchant_id (FK)
+reference
+amount
+currency
+status
+due_date
+created_at
+
+========================================
+4. RECONCILIATION DOMAIN
+========================================
+
+----------------------------
+EXPECTED_PAYMENTS
+----------------------------
+id (PK)
+merchant_id (FK)
+reference
+customer_name
+amount
+currency
+due_date
+status
+created_at
+
+----------------------------
+RECONCILIATION_RUNS
+----------------------------
+id (PK)
+merchant_id (FK)
+run_date
+status
+created_at
+
+----------------------------
+RECONCILIATION_RESULTS
+----------------------------
+id (PK)
+run_id (FK)
+expected_payment_id (FK)
+transaction_id (FK)
+match_status
+confidence_score
+notes
+created_at
+
+----------------------------
+SETTLEMENTS
+----------------------------
+id (PK)
+merchant_id (FK)
+provider_name
+settlement_reference
+amount
+currency
+settled_at
+created_at
+
+========================================
+5. DISPUTE DOMAIN
+========================================
+
+----------------------------
+DISPUTES
+----------------------------
+id (PK)
+merchant_id (FK)
+transaction_id (FK)
+type
+status
+description
+created_at
+updated_at
+
+----------------------------
+DISPUTE_EVENTS
+----------------------------
+id (PK)
+dispute_id (FK)
+event_type
+notes
+created_at
+
+========================================
+6. ALERTS & NOTIFICATIONS
+========================================
+
+----------------------------
+ALERTS
+----------------------------
+id (PK)
+merchant_id (FK)
+type
+severity
+message
+status
+created_at
+
+----------------------------
+NOTIFICATIONS
+----------------------------
+id (PK)
+user_id (FK)
+channel
+message
+status
+sent_at
+created_at
+
+========================================
+7. RISK & AI
+========================================
+
+----------------------------
+RISK_SCORES
+----------------------------
+id (PK)
+transaction_id (FK)
+score
+reason
+created_at
+
+----------------------------
+AI_INSIGHTS
+----------------------------
+id (PK)
+merchant_id (FK)
+type
+summary
+data_json
+created_at
+
+========================================
+8. FINANCIAL / LEDGER (FUTURE)
+========================================
+
+----------------------------
+LEDGER_ENTRIES
+----------------------------
+id (PK)
+merchant_id (FK)
+transaction_id (FK)
+entry_type
+amount
+currency
+created_at
+
+----------------------------
+PAYOUT_BATCHES
+----------------------------
+id (PK)
+merchant_id (FK)
+batch_reference
+total_amount
+status
+created_at
+
+========================================
+9. AUDIT & SYSTEM
+========================================
+
+----------------------------
+AUDIT_LOGS
+----------------------------
+id (PK)
+user_id (FK)
+action
+entity_type
+entity_id
+metadata_json
+created_at
+
+----------------------------
+SUPPORT_THREADS
+----------------------------
+id (PK)
+merchant_id (FK)
+subject
+status
+created_at
+
+----------------------------
+SUPPORT_MESSAGES
+----------------------------
+id (PK)
+thread_id (FK)
+sender_id (FK)
+message
+created_at
+
+========================================
+10. INDEXING STRATEGY
+========================================
+
+Recommended indexes:
+- transactions(merchant_id, status)
+- transactions(provider_transaction_id)
+- transactions(external_reference)
+- reconciliation_results(run_id)
+- disputes(transaction_id)
+- alerts(merchant_id, status)
+
+========================================
+11. NOTES
+========================================
+
+- All financial records should be append-only where possible
+- Use UUIDs for IDs in production
+- Store raw provider payloads in object storage
+- Use JSON fields for flexible metadata
+- Ensure idempotency in transaction ingestion
+
+========================================
+END OF SCHEMA
+========================================

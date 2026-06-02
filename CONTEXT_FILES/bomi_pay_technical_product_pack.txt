@@ -1,0 +1,105 @@
+BOMI PAY TECHNICAL PRODUCT PACK
+
+1. PRODUCT IDENTITY
+Bomi Pay is an AI-driven payment intelligence and orchestration platform for Nigeria.
+Core idea: An intelligence layer above payments.
+
+2. CORE PROBLEM
+- Failed transactions and money hanging
+- Poor support
+- Fraud fear and lack of transparency
+- Difficult API integrations
+- Reconciliation chaos
+- Fragmented payment systems
+
+3. CORE SOLUTION
+- Monitor transactions
+- Explain failures
+- Reconcile payments
+- Resolve disputes
+- Optimize routing (future)
+
+4. MVP PRODUCT (PHASE 1)
+- Merchant onboarding
+- Provider connection
+- Transaction ingestion
+- Transaction dashboard
+- Failed payment detection
+- Alerts
+- Basic reconciliation
+- AI explanation assistant
+- Dispute creation
+
+5. CORE MODULES
+- Bomi Observe (Monitoring)
+- Bomi Recon (Reconciliation)
+- Bomi Resolve (Disputes)
+- Bomi Assist (AI)
+- Bomi Route (Routing - later)
+- Bomi Risk (Fraud - later)
+- Bomi Collect (Collections - later)
+- Bomi Payout (Payouts - later)
+
+6. CORE SERVICES
+- API Gateway
+- Auth Service
+- Merchant Service
+- Transaction Service
+- Provider Adapter Service
+- Reconciliation Service
+- Dispute Service
+- Notification Service
+- AI Service
+- Admin Service
+
+7. KEY FEATURES
+- Real-time transaction visibility
+- Failure detection
+- Payment matching
+- Settlement tracking
+- Alerting system
+- AI explanations
+- Dispute workflows
+
+8. DATA MODEL (CORE)
+- users
+- merchants
+- provider_accounts
+- transactions
+- transaction_events
+- settlements
+- expected_payments
+- reconciliation_results
+- disputes
+- alerts
+- audit_logs
+
+9. AI COMPONENTS
+- Payment Watch Agent
+- Reconciliation Agent
+- Dispute Agent
+- Support Agent
+- Insight Agent
+- Routing Agent (later)
+- Fraud Agent (later)
+
+10. TECH STACK
+- Backend: Python (FastAPI) or Node.js (NestJS)
+- Frontend: Next.js
+- Database: PostgreSQL
+- Cache: Redis
+- Messaging: Kafka / RabbitMQ
+- AI: Python + LLM + rules
+- Infra: Docker
+
+11. ROADMAP
+Phase 1: Monitoring + Alerts + Basic Recon
+Phase 2: Advanced Recon + AI Insights
+Phase 3: Routing + Multi-provider
+Phase 4: Full Gateway + Fraud + API Platform
+
+12. POSITIONING
+Bomi Pay is the intelligence layer for payments in Africa.
+
+13. BUILD DIRECTION
+Start with visibility and control, then expand into orchestration and payments.

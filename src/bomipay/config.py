@@ -1,0 +1,18 @@
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class AppSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+    environment: str = Field("development", alias="BOMIPAY_ENV")
+    database_url: str = Field("sqlite+aiosqlite:///./bomipay.db", alias="DATABASE_URL")
+    redis_url: str = Field("redis://localhost:6379/0", alias="REDIS_URL")
+    secret_key: str = Field(..., alias="SECRET_KEY")
+    jwt_algorithm: str = Field("HS256", alias="JWT_ALGORITHM")
+    jwt_access_token_expire_seconds: int = Field(900, alias="JWT_ACCESS_TOKEN_EXPIRE_SECONDS")
+    jwt_refresh_token_expire_seconds: int = Field(604800, alias="JWT_REFRESH_TOKEN_EXPIRE_SECONDS")
+    provider_encryption_key: str | None = Field(None, alias="PROVIDER_ENCRYPTION_KEY")
+
+
+settings = AppSettings()

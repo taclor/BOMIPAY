@@ -1,0 +1,112 @@
+BOMI PAY — CORE STRATEGY DOCUMENT (v1)
+
+==============================
+PAIN POINTS
+==============================
+
+1. Transaction Failure & Money Hanging
+- Users get debited but receiver doesn’t get money
+- Refunds take days/weeks
+- No visibility into what went wrong
+
+2. Poor Customer Support
+- Bots are ineffective
+- No escalation
+- No proactive communication
+
+3. Fraud & Account Freezing
+- Accounts blocked without explanation
+- Users fear losing money
+- No transparency in risk decisions
+
+4. Developer Integration Pain (APIs)
+- Hard to integrate payments
+- Poor documentation
+- Debugging takes too long
+
+5. SME Cashflow & Reconciliation Chaos
+- Businesses don’t know who paid, what failed, what is pending
+- Manual reconciliation
+
+6. Fragmented Payment Ecosystem
+- Multiple platforms (banks, wallets, USSD, POS)
+- No central control
+
+==============================
+SOLUTION IDEAS
+==============================
+
+1. AI Payment Monitoring (MVP Core)
+- Detect failed transactions
+- Detect missing payments
+- Real-time alerts
+- Auto reconciliation
+
+2. AI Dispute & Refund Engine
+- Detect failed/duplicate transactions
+- Auto-create disputes
+- Track resolution
+- Escalate intelligently
+
+3. AI Developer Payment Assistant
+- AI generates integration code
+- AI monitors API errors
+- AI suggests fixes
+
+4. AI Fraud & Risk Intelligence
+- Detect suspicious behavior
+- Explain why account is flagged
+- Suggest actions to user
+
+5. AI Payment Orchestrator (Big Vision)
+- Choose best provider (cheapest, fastest, most reliable)
+- Auto fallback when failure occurs
+
+==============================
+ROADMAP
+==============================
+
+PHASE 1 (0–90 DAYS)
+- AI Payment Monitoring for SMEs
+- Dashboard for payments and failures
+- Alerts for lost revenue
+- Basic reconciliation
+- SaaS model
+
+PHASE 2 (3–6 MONTHS)
+- Auto reconciliation engine
+- AI anomaly detection
+- Payment reports
+- AI assistant for insights
+
+PHASE 3 (6–12 MONTHS)
+- Payment routing engine
+- Multi-provider integration
+- Auto-switch on failure
+
+PHASE 4 (12+ MONTHS)
+- Full payment gateway
+- Fraud detection system
+- Developer API platform
+
+==============================
+CORE POSITIONING
+==============================
+
+Bomi Pay is the intelligence layer for payments in Africa.
+
+==============================
+MEMORY SUMMARY
+==============================
+
+Pain:
+- Money fails
+- No support
+- No trust
+- No visibility
+
+Solution:
+- Monitor
+- Explain
+- Fix
+- Optimize

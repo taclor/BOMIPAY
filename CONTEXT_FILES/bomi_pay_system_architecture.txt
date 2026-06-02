@@ -1,0 +1,552 @@
+BOMI PAY SYSTEM ARCHITECTURE
+
+1. CORE POSITION
+Bomi Pay is an AI-driven payment intelligence and orchestration platform for Nigeria.
+It starts as a control layer above payment providers and expands into routing, disputes,
+fraud, collections, payouts, and gateway capabilities.
+
+2. ARCHITECTURE PRINCIPLE
+Do not begin as a bank replacement.
+Begin as an intelligence and control layer above:
+- payment gateways
+- banks
+- USSD channels
+- biller platforms
+- payroll systems
+- merchant collection systems
+
+3. HIGH-LEVEL ARCHITECTURE
+
+[ Customer Apps / Merchant Dashboard / Admin Panel / API Clients ]
+                           |
+                           v
+                   [ API Gateway / BFF ]
+                           |
+     -------------------------------------------------
+     |                |              |               |
+     v                v              v               v
+[ Identity ]   [ Payment Core ] [ AI Engine ] [ Notification Hub ]
+     |                |              |               |
+     -------------------------------------------------
+                           |
+                           v
+                  [ Event Bus / Message Queue ]
+                           |
+     -------------------------------------------------------------
+     |             |              |             |                 |
+     v             v              v             v                 v
+[ Transactions ] [ Ledger ] [ Reconciliation ] [ Disputes ] [ Risk/Fraud ]
+     |             |              |             |                 |
+     -------------------------------------------------------------
+                           |
+                           v
+                [ Provider Integration Layer ]
+                           |
+      -------------------------------------------------------
+      |            |             |            |             |
+      v            v             v            v             v
+ [ Paystack ] [ Flutterwave ] [ Banks ] [ USSD ] [ Bills/Payroll/etc ]
+                           |
+                           v
+                    [ Data Warehouse / BI ]
+
+4. EXPERIENCE LAYER
+User-facing interfaces:
+- Merchant web dashboard
+- Consumer/self-service portal
+- Operations admin panel
+- Developer portal
+- Internal support console
+
+Purpose:
+- view payment status
+- view failed or hanging payments
+- view reconciliations
+- track disputes
+- interact with AI support and analysis
+
+5. API GATEWAY LAYER
+Responsibilities:
+- authentication
+- rate limiting
+- request routing
+- logging
+- API versioning
+- tenant-aware routing
+
+6. CORE PAYMENT INTELLIGENCE LAYER
+Main services:
+- transaction ingestion service
+- transaction status service
+- reconciliation service
+- dispute service
+- provider routing service
+- ledger service
+- billing/commission service
+
+7. AI LAYER
+Main AI modules:
+- anomaly detection
+- payment failure prediction
+- support assistant
+- reconciliation assistant
+- fraud/risk scoring
+- routing optimizer
+- merchant insights engine
+
+8. INTEGRATION LAYER
+Connectors for:
+- payment gateways
+- bank APIs
+- USSD aggregators
+- utility and airtime billers
+- payroll systems
+- POS systems
+- ERP/accounting systems
+
+All external provider data must be normalized into one internal model.
+
+9. DATA LAYER
+Main storage components:
+- transactional database
+- ledger database
+- event store
+- analytics warehouse
+- vector store if AI retrieval is needed
+
+10. PHASE 1 ARCHITECTURE
+Launch product:
+AI Payment Monitoring for SMEs
+
+Phase 1 capabilities:
+- ingest payment data from providers
+- normalize transaction events
+- detect failed or hanging transactions
+- alert merchants
+- reconcile payments against expected invoices/orders
+- provide dashboard
+- provide AI assistant for explanations
+
+11. CORE SERVICES IN DETAIL
+
+11.1 Identity and Access Service
+- merchant sign-up
+- user roles
+- team access
+- API keys
+- OAuth/token management
+- session management
+
+Roles:
+- merchant owner
+- finance staff
+- operations staff
+- support agent
+- developer
+- super admin
+
+11.2 Merchant Service
+- merchant profile
+- business type
+- settlement preferences
+- linked providers
+- bank accounts
+- billing plan
+- KYC/KYB status
+
+11.3 Transaction Ingestion Service
+Inputs:
+- provider webhooks
+- provider polling APIs
+- CSV uploads
+- bank statements
+- internal transaction creation
+
+Responsibilities:
+- validate payload
+- assign idempotency key
+- normalize event
+- publish event
+- store raw and normalized records
+
+11.4 Payment Event Normalization Service
+Canonical fields:
+- transaction_id
+- external_reference
+- merchant_id
+- customer_id
+- source_provider
+- payment_channel
+- amount
+- currency
+- fees
+- status
+- failure_reason
+- initiated_at
+- updated_at
+- settled_at
+- payer details
+- receiver details
+- metadata
+
+11.5 Reconciliation Service
+Responsibilities:
+- match payment to invoice/order/payroll/bill
+- detect underpayment
+- detect overpayment
+- detect duplicates
+- detect hanging payments
+- detect settlement mismatch
+- generate reports
+
+Matching methods:
+- exact reference match
+- amount and customer match
+- date window match
+- fuzzy match with confidence score
+
+11.6 Dispute and Resolution Service
+Responsibilities:
+- open issues automatically
+- classify dispute type
+- track status
+- escalate cases
+- notify merchant/customer
+- attach evidence
+
+Dispute types:
+- debited not credited
+- duplicate debit
+- settlement mismatch
+- chargeback
+- fraud suspicion
+- reversal delay
+
+11.7 Ledger Service
+Responsibilities:
+- record platform-side financial events
+- track fees
+- track commissions
+- track payout states
+- create auditable trail
+
+Recommended model:
+- append-only double-entry ledger
+
+11.8 Provider Orchestration Service
+Responsibilities:
+- choose provider by rules or AI
+- retry with fallback provider
+- detect provider downtime
+- score provider reliability
+- route by payment type
+
+11.9 Notification Service
+Channels:
+- email
+- SMS
+- WhatsApp
+- push notification
+- webhook callbacks
+
+11.10 Risk and Fraud Service
+Inputs:
+- transaction velocity
+- device fingerprint
+- unusual amount patterns
+- provider behavior
+- beneficiary changes
+- duplicate attempts
+- geo anomalies
+
+Outputs:
+- risk score
+- flag reason
+- recommended action
+- explainable summary
+
+12. AI ARCHITECTURE
+
+12.1 AI Support Assistant
+Answers:
+- why did this payment fail
+- has this payment been settled
+- what is the likely cause
+- what should the merchant do next
+- what should be escalated
+
+12.2 AI Reconciliation Assistant
+Examples:
+- explains unmatched payments
+- explains short settlements
+- summarizes likely outage patterns
+
+12.3 AI Anomaly Detector
+Examples:
+- spike in failures
+- repeated timeout from one provider
+- duplicate callback patterns
+- unusual payroll failure cluster
+
+12.4 AI Routing Optimizer
+Inputs:
+- historical success rate
+- latency
+- provider fees
+- outage pattern
+- amount band
+- transaction type
+
+Output:
+- recommended provider route
+
+12.5 AI Merchant Insights Engine
+Outputs:
+- top failure windows
+- lost revenue from failures
+- customer drop-off by method
+- best-performing collection channel
+- settlement delay trend
+
+13. DATA ARCHITECTURE
+
+Operational databases:
+- PostgreSQL for merchants, users, transactions, disputes, reconciliation
+- Redis for cache, session storage, idempotency locks, temporary state
+- Object storage for raw payloads, uploads, reports, exports
+- Event bus / queue using Kafka, RabbitMQ, or Redis Streams
+- Analytics warehouse for BI and model training
+
+14. RECOMMENDED MICROSERVICE LAYOUT
+
+Initial services:
+- api-gateway
+- auth-service
+- merchant-service
+- transaction-service
+- reconciliation-service
+- dispute-service
+- notification-service
+- provider-adapter-service
+- ai-service
+- admin-service
+
+Later services:
+- routing-service
+- ledger-service
+- fraud-service
+- billing-service
+- developer-portal-service
+
+15. PROVIDER ADAPTER PATTERN
+Internal adapter contract:
+- create_payment
+- verify_payment
+- fetch_transaction
+- fetch_settlements
+- process_webhook
+- get_provider_health
+- retry_or_reverse
+- map_error_code
+
+Example adapters:
+- paystack_adapter
+- flutterwave_adapter
+- bank_transfer_adapter
+- utility_biller_adapter
+- payroll_adapter
+
+16. PAYMENT SPACES BOMI PAY CAN SUPPORT
+- Merchant collections
+- Payroll and worker payouts
+- Utility and bill payments
+- Business operations payments
+- Marketplace and split payments
+
+17. PRODUCT MODULES
+- Bomi Observe: monitoring and alerts
+- Bomi Recon: reconciliation and settlement matching
+- Bomi Resolve: dispute and refund workflow
+- Bomi Route: smart provider routing
+- Bomi Risk: fraud and anomaly intelligence
+- Bomi Collect: merchant collection tools
+- Bomi Payout: payroll and contractor payouts
+
+18. SECURITY ARCHITECTURE
+Core measures:
+- encryption in transit
+- encryption at rest
+- HMAC webhook verification
+- strict audit logging
+- RBAC
+- least privilege
+- provider credential vaulting
+- idempotency protection
+- tamper-evident records
+- MFA for admin and finance roles
+
+Operational protections:
+- suspicious login alerts
+- API abuse detection
+- replay attack protection
+- payout approval controls
+- dual approval for high-value actions
+
+19. COMPLIANCE MINDSET
+Design for:
+- auditability
+- KYC/KYB workflows
+- consent and privacy controls
+- dispute traceability
+- settlement transparency
+- regulator-friendly logs
+
+20. OBSERVABILITY ARCHITECTURE
+Required observability:
+- structured logs
+- metrics
+- tracing
+- provider health dashboard
+- queue health
+- failure reason distribution
+- webhook delivery status
+
+Operational dashboards:
+- payment success rate by provider
+- failure rate by channel
+- settlement lag by merchant
+- disputes open vs resolved
+- provider outage timeline
+
+21. SUGGESTED TECH STACK
+Backend:
+- Python FastAPI or Node.js NestJS
+
+Frontend:
+- Next.js
+
+Mobile:
+- React Native later
+
+Databases:
+- PostgreSQL
+- Redis
+- object storage
+- analytics warehouse
+
+Messaging:
+- Kafka or RabbitMQ
+- Redis Streams for simpler start if needed
+
+AI:
+- Python service
+- embeddings/vector search where useful
+- LLM-backed assistant with strict tool access
+- rules + ML hybrid
+
+Infrastructure:
+- Docker
+- Kubernetes later
+- CI/CD
+- API gateway
+- secrets manager
+- monitoring stack
+
+22. AI AGENT MAP
+- Payment Watch Agent
+- Reconciliation Agent
+- Dispute Agent
+- Support Agent
+- Fraud Agent
+- Routing Agent
+- Merchant Insight Agent
+
+Agents must act only through controlled workflows and tools.
+
+23. RECOMMENDED API SURFACE
+
+Merchant APIs:
+- create payment link
+- fetch transactions
+- fetch settlements
+- fetch reconciliation report
+- create dispute
+- fetch dispute status
+- fetch alerts
+- fetch merchant analytics
+
+Internal provider APIs:
+- provider webhook endpoint
+- provider settlement sync
+- provider health check
+
+Admin APIs:
+- merchant review
+- provider configuration
+- incident management
+- audit review
+
+24. CORE DATABASE ENTITIES
+- users
+- roles
+- merchants
+- provider_accounts
+- customers
+- payment_requests
+- transactions
+- transaction_events
+- settlements
+- expected_payments
+- reconciliation_results
+- disputes
+- dispute_events
+- alerts
+- risk_scores
+- payout_batches
+- invoices
+- audit_logs
+- notifications
+
+25. DEPLOYMENT ARCHITECTURE
+Environments:
+- local
+- staging
+- production
+
+Production components:
+- load balancer
+- API gateway
+- containerized services
+- message broker
+- primary Postgres
+- Redis
+- object storage
+- analytics store
+- monitoring stack
+- secrets manager
+- backups and disaster recovery
+
+26. MVP BUILD ORDER
+1. Auth and merchant onboarding
+2. Provider adapter framework
+3. Transaction ingestion and normalization
+4. Merchant dashboard
+5. Alerts and notification engine
+6. Reconciliation engine
+7. AI support and explanation assistant
+8. Dispute workflow
+9. Provider health scoring
+10. Smart routing and fallback
+
+27. FINAL VISION
+At maturity, Bomi Pay becomes:
+- a payment observability platform
+- a reconciliation platform
+- a dispute automation platform
+- a provider routing engine
+- a risk intelligence engine
+- a merchant collection system
+- a payout infrastructure layer
+
+VISION STATEMENT
+Bomi Pay is the AI operating system for payment visibility, trust, and orchestration in Nigeria.

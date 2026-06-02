@@ -1,0 +1,731 @@
+BOMI PAY API SPEC PACK
+
+========================================
+1. OVERVIEW
+========================================
+This API spec pack defines the first structured API surface for Bomi Pay,
+an AI-driven payment intelligence and orchestration platform for Nigeria.
+
+API STYLE:
+- REST JSON APIs
+- Versioned routes
+- Bearer token authentication for users
+- API keys for system-to-system integrations
+- HMAC signature verification for inbound webhooks
+
+BASE URL EXAMPLE:
+https://api.bomipay.com
+
+VERSION:
+v1
+
+PRIMARY MVP GOALS:
+- Merchant onboarding
+- Provider connection
+- Transaction monitoring
+- Alerts
+- Reconciliation
+- Disputes
+- AI transaction explanation
+- Admin operations
+
+========================================
+2. AUTHENTICATION
+========================================
+
+2.1 USER AUTH
+Header:
+Authorization: Bearer <access_token>
+
+2.2 API KEY AUTH
+Header:
+X-API-Key: <merchant_api_key>
+
+2.3 WEBHOOK SIGNATURE
+Header:
+X-Bomi-Signature: <hmac_signature>
+
+2.4 COMMON RESPONSE ENVELOPE
+Success:
+{
+  "success": true,
+  "data": {},
+  "meta": {}
+}
+
+Error:
+{
+  "success": false,
+  "error": {
+    "code": "string_code",
+    "message": "Human readable message",
+    "details": {}
+  }
+}
+
+========================================
+3. AUTH API
+========================================
+
+3.1 REGISTER USER
+POST /v1/auth/register
+
+Request:
+{
+  "full_name": "Ernest Ogueri",
+  "email": "ernest@example.com",
+  "phone": "+2348000000000",
+  "password": "StrongPassword123!"
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "user_id": "usr_001",
+    "email": "ernest@example.com",
+    "status": "pending_verification"
+  }
+}
+
+3.2 LOGIN
+POST /v1/auth/login
+
+Request:
+{
+  "email": "ernest@example.com",
+  "password": "StrongPassword123!"
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "access_token": "jwt_token",
+    "refresh_token": "refresh_token",
+    "expires_in": 3600,
+    "user": {
+      "id": "usr_001",
+      "full_name": "Ernest Ogueri",
+      "email": "ernest@example.com"
+    }
+  }
+}
+
+3.3 REFRESH TOKEN
+POST /v1/auth/refresh
+
+Request:
+{
+  "refresh_token": "refresh_token"
+}
+
+3.4 LOGOUT
+POST /v1/auth/logout
+
+Request:
+{
+  "refresh_token": "refresh_token"
+}
+
+3.5 GET CURRENT USER
+GET /v1/auth/me
+
+Response:
+{
+  "success": true,
+  "data": {
+    "id": "usr_001",
+    "full_name": "Ernest Ogueri",
+    "email": "ernest@example.com",
+    "phone": "+2348000000000",
+    "status": "active"
+  }
+}
+
+========================================
+4. MERCHANT API
+========================================
+
+4.1 CREATE MERCHANT
+POST /v1/merchants
+
+Request:
+{
+  "name": "Bomi Store",
+  "business_type": "ecommerce",
+  "email": "finance@bomistore.com",
+  "phone": "+2348000000001",
+  "country": "NG"
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "merchant_id": "mch_001",
+    "name": "Bomi Store",
+    "status": "active"
+  }
+}
+
+4.2 GET MERCHANT PROFILE
+GET /v1/merchants/{merchant_id}
+
+4.3 UPDATE MERCHANT PROFILE
+PATCH /v1/merchants/{merchant_id}
+
+Request:
+{
+  "email": "ops@bomistore.com",
+  "phone": "+2348000000009"
+}
+
+4.4 LIST MERCHANT TEAM MEMBERS
+GET /v1/merchants/{merchant_id}/members
+
+4.5 ADD MERCHANT TEAM MEMBER
+POST /v1/merchants/{merchant_id}/members
+
+Request:
+{
+  "user_id": "usr_002",
+  "role": "finance_staff"
+}
+
+========================================
+5. PROVIDER CONNECTION API
+========================================
+
+5.1 CONNECT PROVIDER ACCOUNT
+POST /v1/providers/connect
+
+Request:
+{
+  "merchant_id": "mch_001",
+  "provider_name": "paystack",
+  "credentials": {
+    "api_key": "pk_live_xxx",
+    "secret_key": "sk_live_xxx"
+  }
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "provider_account_id": "pa_001",
+    "provider_name": "paystack",
+    "status": "connected"
+  }
+}
+
+5.2 LIST CONNECTED PROVIDERS
+GET /v1/providers?merchant_id=mch_001
+
+5.3 GET PROVIDER HEALTH
+GET /v1/providers/{provider_name}/health?merchant_id=mch_001
+
+Response:
+{
+  "success": true,
+  "data": {
+    "provider_name": "paystack",
+    "status": "healthy",
+    "success_rate_24h": 98.5,
+    "avg_latency_ms": 820,
+    "failure_rate_24h": 1.5
+  }
+}
+
+5.4 DISCONNECT PROVIDER
+DELETE /v1/providers/{provider_account_id}
+
+========================================
+6. TRANSACTION API
+========================================
+
+6.1 LIST TRANSACTIONS
+GET /v1/transactions?merchant_id=mch_001&status=failed&provider_name=paystack&page=1&page_size=20
+
+Response:
+{
+  "success": true,
+  "data": [
+    {
+      "id": "txn_001",
+      "merchant_id": "mch_001",
+      "provider_name": "paystack",
+      "provider_transaction_id": "pst_12345",
+      "internal_reference": "BOMI-REF-1001",
+      "external_reference": "ORDER-9001",
+      "payment_type": "collection",
+      "payment_channel": "bank_transfer",
+      "currency": "NGN",
+      "amount": 15000,
+      "fee_amount": 100,
+      "net_amount": 14900,
+      "status": "failed",
+      "status_reason": "timeout",
+      "initiated_at": "2026-04-11T09:00:00Z",
+      "confirmed_at": null,
+      "settled_at": null
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "page_size": 20,
+    "total": 1
+  }
+}
+
+6.2 GET TRANSACTION DETAILS
+GET /v1/transactions/{transaction_id}
+
+6.3 GET TRANSACTION EVENTS
+GET /v1/transactions/{transaction_id}/events
+
+Response:
+{
+  "success": true,
+  "data": [
+    {
+      "id": "te_001",
+      "transaction_id": "txn_001",
+      "event_type": "provider_webhook_received",
+      "status": "processing",
+      "created_at": "2026-04-11T09:00:05Z"
+    },
+    {
+      "id": "te_002",
+      "transaction_id": "txn_001",
+      "event_type": "provider_status_failed",
+      "status": "failed",
+      "created_at": "2026-04-11T09:02:10Z"
+    }
+  ]
+}
+
+6.4 SEARCH TRANSACTION BY REFERENCE
+GET /v1/transactions/search?merchant_id=mch_001&reference=ORDER-9001
+
+6.5 CREATE PAYMENT REQUEST
+POST /v1/payment-requests
+
+Request:
+{
+  "merchant_id": "mch_001",
+  "reference": "INV-1001",
+  "amount": 25000,
+  "currency": "NGN",
+  "due_date": "2026-04-15"
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "payment_request_id": "pr_001",
+    "reference": "INV-1001",
+    "status": "pending"
+  }
+}
+
+========================================
+7. ALERTS API
+========================================
+
+7.1 LIST ALERTS
+GET /v1/alerts?merchant_id=mch_001&status=open&severity=high
+
+Response:
+{
+  "success": true,
+  "data": [
+    {
+      "id": "alt_001",
+      "merchant_id": "mch_001",
+      "type": "failure_spike",
+      "severity": "high",
+      "message": "Failure rate on Paystack rose above threshold in the last 30 minutes.",
+      "status": "open",
+      "created_at": "2026-04-11T10:00:00Z"
+    }
+  ]
+}
+
+7.2 ACKNOWLEDGE ALERT
+POST /v1/alerts/{alert_id}/acknowledge
+
+Request:
+{
+  "note": "Finance team has seen this."
+}
+
+7.3 RESOLVE ALERT
+POST /v1/alerts/{alert_id}/resolve
+
+Request:
+{
+  "resolution_note": "Provider recovered and alert condition cleared."
+}
+
+========================================
+8. RECONCILIATION API
+========================================
+
+8.1 IMPORT EXPECTED PAYMENTS
+POST /v1/reconciliation/import
+
+Request:
+{
+  "merchant_id": "mch_001",
+  "source_type": "invoice_csv",
+  "file_name": "expected_payments_april.csv"
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "import_id": "imp_001",
+    "status": "processing"
+  }
+}
+
+8.2 CREATE RECONCILIATION RUN
+POST /v1/reconciliation/runs
+
+Request:
+{
+  "merchant_id": "mch_001",
+  "date_from": "2026-04-01",
+  "date_to": "2026-04-11"
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "run_id": "rec_run_001",
+    "status": "running"
+  }
+}
+
+8.3 LIST RECONCILIATION RUNS
+GET /v1/reconciliation/runs?merchant_id=mch_001
+
+8.4 GET RECONCILIATION RESULTS
+GET /v1/reconciliation/runs/{run_id}/results
+
+Response:
+{
+  "success": true,
+  "data": [
+    {
+      "id": "rr_001",
+      "expected_payment_id": "exp_001",
+      "transaction_id": "txn_001",
+      "match_status": "unmatched",
+      "confidence_score": 0.12,
+      "notes": "No successful transaction matched invoice reference."
+    }
+  ]
+}
+
+8.5 EXPORT RECONCILIATION REPORT
+GET /v1/reconciliation/runs/{run_id}/export?format=csv
+
+========================================
+9. SETTLEMENT API
+========================================
+
+9.1 LIST SETTLEMENTS
+GET /v1/settlements?merchant_id=mch_001&provider_name=paystack
+
+9.2 GET SETTLEMENT DETAILS
+GET /v1/settlements/{settlement_id}
+
+========================================
+10. DISPUTES API
+========================================
+
+10.1 CREATE DISPUTE
+POST /v1/disputes
+
+Request:
+{
+  "merchant_id": "mch_001",
+  "transaction_id": "txn_001",
+  "type": "debited_not_credited",
+  "description": "Customer was debited but merchant did not receive value."
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "dispute_id": "dsp_001",
+    "status": "open"
+  }
+}
+
+10.2 LIST DISPUTES
+GET /v1/disputes?merchant_id=mch_001&status=open
+
+10.3 GET DISPUTE DETAILS
+GET /v1/disputes/{dispute_id}
+
+10.4 ADD DISPUTE EVENT
+POST /v1/disputes/{dispute_id}/events
+
+Request:
+{
+  "event_type": "merchant_note",
+  "notes": "Customer provided proof of debit."
+}
+
+10.5 UPDATE DISPUTE STATUS
+PATCH /v1/disputes/{dispute_id}
+
+Request:
+{
+  "status": "under_review"
+}
+
+========================================
+11. AI ASSIST API
+========================================
+
+11.1 ASK AI ASSISTANT
+POST /v1/assist/query
+
+Request:
+{
+  "merchant_id": "mch_001",
+  "query": "Why did transaction txn_001 fail?"
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "answer": "The transaction appears to have failed because the provider returned a timeout after processing began. No confirmation or settlement event was recorded.",
+    "confidence": 0.91,
+    "related_transaction_ids": ["txn_001"],
+    "suggested_actions": [
+      "Open a dispute if customer debit is confirmed.",
+      "Check provider status for the same time window."
+    ]
+  }
+}
+
+11.2 GET AI SUMMARY
+GET /v1/assist/summary?merchant_id=mch_001&period=7d
+
+Response:
+{
+  "success": true,
+  "data": {
+    "summary": "In the last 7 days, your highest payment failures came from bank transfer timeouts between 2 PM and 4 PM.",
+    "insights": [
+      "Paystack failure rate rose to 3.2% on Tuesday.",
+      "12 transactions remain unmatched."
+    ]
+  }
+}
+
+========================================
+12. NOTIFICATIONS API
+========================================
+
+12.1 LIST NOTIFICATIONS
+GET /v1/notifications?user_id=usr_001
+
+12.2 MARK NOTIFICATION AS READ
+POST /v1/notifications/{notification_id}/read
+
+========================================
+13. ADMIN API
+========================================
+
+13.1 LIST MERCHANTS
+GET /v1/admin/merchants
+
+13.2 GET MERCHANT DETAILS
+GET /v1/admin/merchants/{merchant_id}
+
+13.3 LIST INCIDENTS
+GET /v1/admin/incidents
+
+13.4 REPLAY WEBHOOK PROCESSING
+POST /v1/admin/webhooks/replay
+
+Request:
+{
+  "provider_name": "paystack",
+  "event_id": "evt_12345"
+}
+
+13.5 GET PROVIDER HEALTH OVERVIEW
+GET /v1/admin/providers/health
+
+13.6 LIST OPEN DISPUTES
+GET /v1/admin/disputes?status=open
+
+========================================
+14. PROVIDER WEBHOOK API
+========================================
+
+14.1 PAYSTACK WEBHOOK
+POST /webhooks/paystack
+
+14.2 FLUTTERWAVE WEBHOOK
+POST /webhooks/flutterwave
+
+14.3 BANK TRANSFER WEBHOOK
+POST /webhooks/bank-transfer
+
+Webhook processing rules:
+- verify signature
+- store raw payload
+- enforce idempotency
+- normalize payload
+- publish event
+- update transaction state
+- trigger alerts if needed
+
+========================================
+15. STATUS ENUMS
+========================================
+
+TRANSACTION STATUS:
+- pending
+- processing
+- successful
+- failed
+- reversed
+- disputed
+- settled
+- partially_settled
+- unknown
+
+ALERT STATUS:
+- open
+- acknowledged
+- resolved
+
+DISPUTE STATUS:
+- open
+- under_review
+- waiting_for_provider
+- resolved
+- rejected
+- closed
+
+RISK LEVEL:
+- low
+- medium
+- high
+- critical
+
+========================================
+16. ERROR CODES
+========================================
+
+COMMON ERROR CODES:
+- unauthorized
+- forbidden
+- validation_error
+- not_found
+- rate_limited
+- provider_unavailable
+- duplicate_request
+- invalid_signature
+- reconciliation_failed
+- internal_error
+
+Example:
+{
+  "success": false,
+  "error": {
+    "code": "validation_error",
+    "message": "merchant_id is required",
+    "details": {
+      "field": "merchant_id"
+    }
+  }
+}
+
+========================================
+17. PAGINATION STANDARD
+========================================
+
+Query parameters:
+- page
+- page_size
+
+Meta response:
+{
+  "page": 1,
+  "page_size": 20,
+  "total": 125
+}
+
+========================================
+18. IDEMPOTENCY
+========================================
+
+For write endpoints that may be retried, support:
+Header:
+Idempotency-Key: <unique_key>
+
+Apply to:
+- create payment request
+- create dispute
+- create reconciliation run
+- replay webhook actions where applicable
+
+========================================
+19. AUDIT AND SECURITY RULES
+========================================
+
+- Log all sensitive actions
+- Mask secrets in logs
+- Enforce RBAC on merchant and admin routes
+- Require MFA for admin and critical finance actions
+- Use append-only event history for transaction state changes
+- Never allow AI assistant to directly mutate financial records without workflow authorization
+
+========================================
+20. FUTURE API EXPANSION
+========================================
+
+Planned future routes:
+- /v1/routes/recommendation
+- /v1/risk/scores
+- /v1/payment-links
+- /v1/payouts
+- /v1/ledger/entries
+- /v1/collect/invoices
+- /v1/developer/sdk
+
+========================================
+21. FINAL API DIRECTION
+========================================
+
+Bomi Pay API v1 should launch as the operational API layer for:
+- transaction visibility
+- alerts
+- reconciliation
+- disputes
+- AI explanations
+
+Later versions can extend into:
+- routing
+- payouts
+- collections
+- risk scoring
+- full payment orchestration
+
+END OF DOCUMENT

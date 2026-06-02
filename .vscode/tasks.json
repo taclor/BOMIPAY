@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Install dependencies",
+      "type": "shell",
+      "command": "pip install -e '.[dev]'",
+      "inAgents": true,
+      "runOptions": { "runOn": "worktreeCreated" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Start dev server",
+      "type": "shell",
+      "command": "uvicorn bomipay.main:app --host 0.0.0.0 --port 8080 --reload",
+      "inAgents": true,
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Run tests",
+      "type": "shell",
+      "command": "pytest",
+      "inAgents": true,
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Docker: start all services",
+      "type": "shell",
+      "command": "docker compose up --build",
+      "inAgents": true,
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Run database migrations",
+      "type": "shell",
+      "command": "alembic upgrade head",
+      "inAgents": true,
+      "presentation": { "reveal": "always", "panel": "shared" }
+    }
+  ]
+}

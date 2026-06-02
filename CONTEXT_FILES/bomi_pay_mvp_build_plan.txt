@@ -1,0 +1,278 @@
+BOMI PAY MVP SPRINT-BY-SPRINT BUILD PLAN
+
+========================================
+1. OVERVIEW
+========================================
+This plan defines the execution roadmap to build the Bomi Pay MVP.
+
+MVP GOAL:
+Help Nigerian businesses detect failed payments, reconcile transactions,
+and gain visibility into their payment flows.
+
+DURATION:
+~6–8 weeks (6 core sprints)
+
+TEAM ASSUMPTION:
+- 1 Backend Engineer
+- 1 Frontend Engineer
+- 1 AI/Fullstack Engineer
+- 1 Product/Architect (you)
+
+========================================
+SPRINT 0 — SETUP (3–5 DAYS)
+========================================
+
+GOAL:
+Establish foundation and development environment
+
+TASKS:
+- Setup Git repository
+- Setup project structure (backend + frontend)
+- Setup Docker environment
+- Setup PostgreSQL and Redis
+- Setup basic CI/CD (GitHub Actions or similar)
+- Setup environment variables and secrets management
+- Define coding standards and folder structure
+
+OUTPUT:
+- Running dev environment
+- Basic project skeleton
+
+========================================
+SPRINT 1 — AUTH + MERCHANT CORE
+========================================
+
+GOAL:
+Enable user authentication and merchant onboarding
+
+BACKEND:
+- Auth service (register, login, JWT)
+- User model + roles
+- Merchant model
+- Merchant membership model
+- API endpoints:
+  - POST /auth/register
+  - POST /auth/login
+  - GET /auth/me
+  - POST /merchants
+
+FRONTEND:
+- Login page
+- Registration page
+- Basic dashboard shell
+
+OUTPUT:
+- User can register and login
+- Merchant entity created
+
+========================================
+SPRINT 2 — PROVIDER CONNECTION + INGESTION
+========================================
+
+GOAL:
+Connect payment providers and ingest transaction data
+
+BACKEND:
+- Provider account model
+- Provider adapter base interface
+- Paystack adapter (first integration)
+- Webhook endpoint:
+  - /webhooks/paystack
+- Transaction ingestion service
+- Transaction normalization logic
+- Transaction storage
+
+FRONTEND:
+- Provider connection UI
+- Show connected providers
+
+OUTPUT:
+- Payment data starts flowing into system
+
+========================================
+SPRINT 3 — TRANSACTION DASHBOARD + ALERTS
+========================================
+
+GOAL:
+Give visibility into payments and detect failures
+
+BACKEND:
+- Transaction query API
+- Filtering (status, provider, date)
+- Alert engine:
+  - failure detection
+  - hanging transaction detection
+- Notification service (email basic)
+
+FRONTEND:
+- Transaction table UI
+- Transaction detail view
+- Alert panel
+
+OUTPUT:
+- Merchant sees all transactions
+- Merchant is alerted on failures
+
+========================================
+SPRINT 4 — RECONCILIATION ENGINE (CORE VALUE)
+========================================
+
+GOAL:
+Match expected vs actual payments
+
+BACKEND:
+- Expected payments import (CSV)
+- Reconciliation engine (basic rules)
+- Matching logic:
+  - reference match
+  - amount match
+- Reconciliation result storage
+
+APIs:
+- POST /reconciliation/import
+- POST /reconciliation/runs
+- GET /reconciliation/results
+
+FRONTEND:
+- Upload expected payments file
+- Reconciliation results table
+- Highlight unmatched and failed items
+
+OUTPUT:
+- Businesses see missing payments
+- Core value unlocked
+
+========================================
+SPRINT 5 — AI ASSISTANT + INSIGHTS
+========================================
+
+GOAL:
+Add intelligence layer to explain and guide
+
+BACKEND:
+- AI service (Python)
+- Transaction explanation logic
+- Reconciliation summary logic
+- AI endpoint:
+  - POST /assist/query
+  - GET /assist/summary
+
+AI FEATURES:
+- Explain failed transaction
+- Explain unmatched payments
+- Suggest next actions
+
+FRONTEND:
+- AI chat interface
+- Insight summary panel
+
+OUTPUT:
+- System explains what is happening
+- Differentiation achieved
+
+========================================
+SPRINT 6 — DISPUTES + ADMIN TOOLS
+========================================
+
+GOAL:
+Enable resolution workflows and internal control
+
+BACKEND:
+- Dispute model
+- Dispute lifecycle
+- Dispute APIs:
+  - POST /disputes
+  - GET /disputes
+- Admin endpoints:
+  - webhook replay
+  - merchant management
+
+FRONTEND:
+- Dispute creation UI
+- Dispute tracking UI
+- Admin panel (basic)
+
+OUTPUT:
+- Merchants can act on failed payments
+- System becomes operational tool
+
+========================================
+SPRINT 7 (OPTIONAL) — POLISH + STABILITY
+========================================
+
+GOAL:
+Prepare for real users
+
+TASKS:
+- Improve UI/UX
+- Add pagination and performance tuning
+- Add logging and monitoring
+- Add retry logic for webhooks
+- Add provider health metrics
+- Security improvements (RBAC, validation)
+- Load testing
+
+OUTPUT:
+- Production-ready MVP
+
+========================================
+DEPLOYMENT PLAN
+========================================
+
+ENVIRONMENTS:
+- Development
+- Staging
+- Production
+
+STEPS:
+- Deploy backend services (Docker)
+- Deploy frontend (Vercel or similar)
+- Setup database backups
+- Setup monitoring (logs + metrics)
+- Configure domain and SSL
+
+========================================
+MVP SUCCESS CRITERIA
+========================================
+
+PRODUCT METRICS:
+- Merchant onboarded
+- Transactions visible in dashboard
+- Failed transactions detected
+- Reconciliation reports generated
+- AI explanations used
+
+BUSINESS METRICS:
+- First paying customers
+- Monthly recurring revenue
+- Merchant retention
+- Number of providers connected
+
+========================================
+POST-MVP NEXT STEPS
+========================================
+
+Phase 2:
+- Advanced reconciliation
+- Provider scoring
+- AI anomaly detection
+
+Phase 3:
+- Payment routing
+- Multi-provider fallback
+
+Phase 4:
+- Payment gateway
+- Fraud detection
+- Developer platform
+
+========================================
+FINAL BUILD PRINCIPLE
+========================================
+
+Start with visibility.
+Then add intelligence.
+Then add control.
+Then own the payment flow.
+
+END OF DOCUMENT
