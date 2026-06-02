@@ -26,6 +26,7 @@ from .routes.dashboard import router as dashboard_router
 from .routes.timeline import router as timeline_router
 from .routes.action_center import router as action_center_router
 from .routes.payment_graph import router as payment_graph_router
+from .routes.ai_assistant import router as ai_assistant_router
 
 configure_logging()
 logger = logging.getLogger("bomipay")
@@ -71,6 +72,7 @@ app.include_router(dashboard_router, prefix="/api/v1")
 app.include_router(timeline_router, prefix="/api/v1")
 app.include_router(action_center_router, prefix="/api/v1")
 app.include_router(payment_graph_router, prefix="/api/v1")
+app.include_router(ai_assistant_router, prefix="/api/v1")
 app.include_router(webhooks_router)
 
 
