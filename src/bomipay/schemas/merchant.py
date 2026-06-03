@@ -1,7 +1,7 @@
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, constr
+from pydantic import BaseModel, ConfigDict, EmailStr, constr, field_serializer
 
 from ..models.user import Role
 
@@ -17,6 +17,10 @@ class MerchantResponse(BaseModel):
     is_kyc_ready: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('id')
+    def serialize_uuid(self, value: UUID | str, _info) -> str:
+        return str(value) if value else None
 
 
 class MerchantCreateRequest(BaseModel):
@@ -57,3 +61,7 @@ class ProviderAccountResponse(BaseModel):
     status: str
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('id', 'merchant_id')
+    def serialize_uuid(self, value: UUID | str, _info) -> str:
+        return str(value) if value else None

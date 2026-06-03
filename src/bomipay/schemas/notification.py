@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, constr
+from pydantic import BaseModel, ConfigDict, constr, field_serializer
 
 
 class NotificationResponse(BaseModel):
@@ -22,6 +22,10 @@ class NotificationResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('id', 'user_id', 'merchant_id', 'alert_id')
+    def serialize_uuid(self, value: UUID | str | None, _info) -> str | None:
+        return str(value) if value else None
 
 
 class NotificationListQuery(BaseModel):

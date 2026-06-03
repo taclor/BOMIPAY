@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, constr
+from pydantic import BaseModel, ConfigDict, EmailStr, constr, field_serializer
 
 
 class ProviderCredentials(BaseModel):
@@ -20,6 +20,10 @@ class ProviderAccountData(BaseModel):
     provider_name: str
     status: str
 
+    @field_serializer('provider_account_id')
+    def serialize_uuid(self, value: UUID | str, _info) -> str:
+        return str(value) if value else None
+
 
 class ProviderConnectResponse(BaseModel):
     success: bool
@@ -32,6 +36,10 @@ class ProviderHealthResponse(BaseModel):
     status: str
     connected: bool
 
+    @field_serializer('merchant_id')
+    def serialize_uuid(self, value: UUID | str, _info) -> str:
+        return str(value) if value else None
+
 
 class ProviderListResponse(BaseModel):
     provider_account_id: UUID | str
@@ -40,3 +48,7 @@ class ProviderListResponse(BaseModel):
     status: str
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('provider_account_id', 'merchant_id')
+    def serialize_uuid(self, value: UUID | str, _info) -> str:
+        return str(value) if value else None

@@ -118,7 +118,7 @@ class TransactionService:
                 merchant_id=merchant_id,
                 transaction_id=transaction.id,
                 source_event_id=provider_event_id,
-                alert_type=AlertType.transaction_failure,
+                alert_type=AlertType.provider_error,
                 severity=AlertSeverity.high,
                 description=f"Transaction {transaction.provider_transaction_id} failed on {provider_name}.",
                 metadata_json={

@@ -14,20 +14,29 @@ class AlertService:
         description: str,
         transaction_id=None,
         source_event_id: str | None = None,
+        source_type: str | None = None,
+        rule_code: str | None = None,
         metadata_json: dict | None = None,
     ) -> Alert:
         if source_event_id:
             existing = await AlertService.get_by_source_event(db, merchant_id, source_event_id, alert_type)
-            if existing:
+            if existing and existing.status != "resolved":
+                # Increment occurrence count for active alerts
+                existing.occurrence_count = (existing.occurrence_count or 1) + 1
+                await db.flush()
+                await db.refresh(existing)
                 return existing
 
         alert = Alert(
             merchant_id=merchant_id,
             transaction_id=transaction_id,
             source_event_id=source_event_id,
+            source_type=source_type,
+            rule_code=rule_code,
             alert_type=alert_type.value,
             severity=severity.value,
             description=description,
+            occurrence_count=1,
             metadata_json=metadata_json,
         )
         db.add(alert)
@@ -65,3 +74,4 @@ class AlertService:
         await db.flush()
         await db.refresh(alert)
         return alert
+
