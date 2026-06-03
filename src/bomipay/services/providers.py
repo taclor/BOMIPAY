@@ -30,7 +30,23 @@ class ProviderAdapter(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def fetch_transactions(self, merchant_id: str, date_from: str | None = None, date_to: str | None = None) -> list[dict[str, Any]]:
+        pass
+
+    @abc.abstractmethod
     def fetch_settlements(self, merchant_id: str) -> list[dict[str, Any]]:
+        pass
+
+    @abc.abstractmethod
+    def fetch_transfers(self, merchant_id: str) -> list[dict[str, Any]]:
+        pass
+
+    @abc.abstractmethod
+    def fetch_refunds(self, merchant_id: str) -> list[dict[str, Any]]:
+        pass
+
+    @abc.abstractmethod
+    def process_webhook(self, headers: dict[str, str], body: bytes, secret: str) -> dict[str, Any]:
         pass
 
     @abc.abstractmethod

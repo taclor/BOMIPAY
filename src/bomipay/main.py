@@ -32,7 +32,7 @@ configure_logging()
 logger = logging.getLogger("bomipay")
 
 @asynccontextmanager
-def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI):
     logger.info("service.startup", extra={"environment": settings.environment})
     yield
     logger.info("service.shutdown")
@@ -48,10 +48,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_allowed_origins_list,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["*"]
+    allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-Paystack-Signature"],
 )
 
 app.include_router(health_router, prefix="/api/v1")

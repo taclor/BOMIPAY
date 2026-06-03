@@ -150,8 +150,7 @@ async def verify_bank_account(
     _check_merchant_access(current_user, str(account.merchant_id))
 
     await BankAccountService.initiate_verification(db, account)
-    # Stub: auto-complete verification as success
-    await BankAccountService.complete_verification(db, account, success=True)
+    await BankAccountService.verify_with_adapter(db, account)
     log_audit_event(
         db,
         event_type="bank_account.verified",

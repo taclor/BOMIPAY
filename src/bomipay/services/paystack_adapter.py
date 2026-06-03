@@ -17,6 +17,11 @@ class PaystackAdapter(ProviderAdapter):
         computed = hmac.new(secret.encode("utf-8"), body, hashlib.sha512).hexdigest()
         return hmac.compare_digest(computed, signature)
 
+    def process_webhook(self, headers: dict[str, str], body: bytes, secret: str) -> dict[str, Any]:
+        if not self.verify_signature(headers, body, secret):
+            raise ValueError("Invalid Paystack webhook signature")
+        return self.normalize_webhook(body)
+
     def normalize_webhook(self, body: bytes) -> dict[str, Any]:
         payload = json.loads(body)
         event = payload.get("event")
@@ -93,8 +98,17 @@ class PaystackAdapter(ProviderAdapter):
     def verify_transaction(self, transaction_id: str) -> dict[str, Any]:  # pragma: no cover - stub
         raise NotImplementedError("Paystack verify_transaction is implemented in a later sprint")
 
+    def fetch_transactions(self, merchant_id: str, date_from: str | None = None, date_to: str | None = None) -> list[dict[str, Any]]:  # pragma: no cover - stub
+        return []
+
     def fetch_settlements(self, merchant_id: str) -> list[dict[str, Any]]:  # pragma: no cover - stub
-        raise NotImplementedError("Paystack fetch_settlements is implemented in a later sprint")
+        return []
+
+    def fetch_transfers(self, merchant_id: str) -> list[dict[str, Any]]:  # pragma: no cover - stub
+        return []
+
+    def fetch_refunds(self, merchant_id: str) -> list[dict[str, Any]]:  # pragma: no cover - stub
+        return []
 
     def map_status(self, provider_status: str) -> str:  # pragma: no cover - stub
         mapping = {

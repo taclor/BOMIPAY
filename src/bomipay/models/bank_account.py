@@ -36,6 +36,7 @@ class BankAccount(Base, TimestampMixin):
     bank_name = Column(String(255), nullable=False)
     bank_code = Column(String(64), nullable=True)
     account_number_encrypted = Column(String(1024), nullable=False)
+    account_number_last4 = Column(String(4), nullable=False)
     account_name = Column(String(255), nullable=False)
     currency = Column(String(16), nullable=False, default="NGN")
     purpose = Column(String(32), nullable=False, default=BankAccountPurpose.settlement.value)

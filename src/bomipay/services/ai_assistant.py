@@ -40,9 +40,9 @@ def _action(action_type: str, description: str, priority: str = "medium", entity
     return item
 
 
-def _confidence(data_points: int, max_points: int = 6) -> float:
+def _confidence_score_bps(data_points: int, max_points: int = 6) -> int:
     """Confidence proportional to the number of data sources with non-zero findings."""
-    return round(min(1.0, max(0.1, data_points / max_points)), 2)
+    return max(0, min(10000, int(round((data_points / max_points) * 10000))))
 
 
 # ---------------------------------------------------------------------------
@@ -204,7 +204,7 @@ async def _handle_money_at_risk(db: AsyncSession, merchant_id: str) -> dict:
 
     return {
         "answer": " ".join(answer_parts),
-        "confidence": _confidence(data_points),
+        "confidence_score_bps": _confidence_score_bps(data_points),
         "cited_records": cited,
         "suggested_actions": suggested,
         "context_used": {**totals, "top_providers_by_failure": provider_summary},
@@ -242,7 +242,7 @@ async def _handle_provider_problems(db: AsyncSession, merchant_id: str) -> dict:
 
     return {
         "answer": " ".join(answer_parts) if answer_parts else "No provider problems detected.",
-        "confidence": _confidence(len(provider_summary) + len(failed_sync_jobs)),
+        "confidence_score_bps": _confidence_score_bps(len(provider_summary) + len(failed_sync_jobs)),
         "cited_records": cited,
         "suggested_actions": suggested,
         "context_used": {"provider_failure_summary": provider_summary},
@@ -273,7 +273,7 @@ async def _handle_settlement_mismatch(db: AsyncSession, merchant_id: str) -> dic
 
     return {
         "answer": " ".join(answer_parts),
-        "confidence": _confidence(len(mismatches) + (1 if bank_entries else 0)),
+        "confidence_score_bps": _confidence_score_bps(len(mismatches) + (1 if bank_entries else 0)),
         "cited_records": cited,
         "suggested_actions": suggested,
         "context_used": {"reconciliation_mismatches": len(mismatches), "bank_entries_available": len(bank_entries)},
@@ -315,7 +315,7 @@ async def _handle_what_to_do_today(db: AsyncSession, merchant_id: str) -> dict:
 
     return {
         "answer": " ".join(answer_parts),
-        "confidence": _confidence(len(incidents) + (1 if totals["total_at_risk_minor"] > 0 else 0)),
+        "confidence_score_bps": _confidence_score_bps(len(incidents) + (1 if totals["total_at_risk_minor"] > 0 else 0)),
         "cited_records": cited,
         "suggested_actions": suggested,
         "context_used": {**totals, "open_incidents": len(incidents), "unhealthy_data_sources": len(unhealthy_sources)},
@@ -378,7 +378,7 @@ class AIAssistantService:
                     f"Here is a summary: {totals['total_at_risk_minor']} minor units at risk, "
                     f"{len(incidents)} open incident(s). Use a more specific query for deeper analysis."
                 ),
-                "confidence": 0.5,
+                "confidence_score_bps": 5000,
                 "cited_records": [_cite("incident", i.id, i.title) for i in incidents[:3]],
                 "suggested_actions": [
                     _action("review_dashboard", "Check the Mission Control dashboard for a full overview.", priority="low")

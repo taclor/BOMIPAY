@@ -1,12 +1,13 @@
 import logging
 import uuid
+from abc import ABC, abstractmethod
 from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.bank_account import BankAccount, BankAccountVerificationStatus
-from ..services.encryption import encrypt_secret, decrypt_secret
+from ..services.encryption import encrypt_secret
 
 logger = logging.getLogger("bomipay")
 
@@ -17,6 +18,17 @@ def mask_account_number(account_number: str) -> str:
     if len(account_number) <= 4:
         return MASK_CHAR * len(account_number)
     return MASK_CHAR * (len(account_number) - 4) + account_number[-4:]
+
+
+class BankAccountVerificationAdapter(ABC):
+    @abstractmethod
+    async def verify(self, bank_code: str | None, account_number_last4: str, account_name: str) -> bool:
+        raise NotImplementedError
+
+
+class StubBankAccountVerificationAdapter(BankAccountVerificationAdapter):
+    async def verify(self, bank_code: str | None, account_number_last4: str, account_name: str) -> bool:
+        return True
 
 
 class BankAccountService:
@@ -32,6 +44,7 @@ class BankAccountService:
         bank_code: Optional[str] = None,
         metadata_json: Optional[dict] = None,
     ) -> BankAccount:
+        account_number_last4 = account_number[-4:]
         encrypted = encrypt_secret(account_number)
         account = BankAccount(
             id=uuid.uuid4(),
@@ -39,6 +52,7 @@ class BankAccountService:
             bank_name=bank_name,
             bank_code=bank_code,
             account_number_encrypted=encrypted,
+            account_number_last4=account_number_last4,
             account_name=account_name,
             currency=currency,
             purpose=purpose,
@@ -105,17 +119,26 @@ class BankAccountService:
         return account
 
     @staticmethod
+    async def verify_with_adapter(
+        db: AsyncSession,
+        account: BankAccount,
+        adapter: BankAccountVerificationAdapter | None = None,
+    ) -> BankAccount:
+        verifier = adapter or StubBankAccountVerificationAdapter()
+        await BankAccountService.initiate_verification(db, account)
+        success = await verifier.verify(account.bank_code, account.account_number_last4, account.account_name)
+        return await BankAccountService.complete_verification(db, account, success=success)
+
+    @staticmethod
     def to_response_dict(account: BankAccount) -> dict:
-        try:
-            raw_number = decrypt_secret(account.account_number_encrypted)
-        except Exception:
-            raw_number = "****"
+        masked = f"******{account.account_number_last4}"
         return {
             "id": account.id,
             "merchant_id": account.merchant_id,
             "bank_name": account.bank_name,
             "bank_code": account.bank_code,
-            "account_number_masked": mask_account_number(raw_number),
+            "account_number_masked": masked,
+            "account_number_last4": account.account_number_last4,
             "account_name": account.account_name,
             "currency": account.currency,
             "purpose": account.purpose,

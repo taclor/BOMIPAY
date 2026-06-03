@@ -6,7 +6,7 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.data_source import DataSource, DataSourceStatus
+from ..models.data_source import DataSource, DataSourceStatus, DataSourceType
 
 logger = logging.getLogger("bomipay")
 
@@ -19,6 +19,7 @@ class DataSourceService:
         source_type: str,
         display_name: str,
         provider_name: Optional[str] = None,
+        provider_account_id: Optional[str] = None,
         configuration_json: Optional[dict] = None,
     ) -> DataSource:
         ds = DataSource(
@@ -26,6 +27,7 @@ class DataSourceService:
             merchant_id=merchant_id,
             source_type=source_type,
             provider_name=provider_name,
+            provider_account_id=provider_account_id,
             display_name=display_name,
             configuration_json=configuration_json,
         )
@@ -73,6 +75,7 @@ class DataSourceService:
         db: AsyncSession,
         merchant_id: str,
         provider_name: str,
+        provider_account_id: Optional[str] = None,
     ) -> DataSource:
         result = await db.execute(
             select(DataSource).where(
@@ -88,12 +91,53 @@ class DataSourceService:
                 merchant_id=merchant_id,
                 source_type="provider_webhook",
                 provider_name=provider_name,
+                provider_account_id=provider_account_id,
                 display_name=f"{provider_name} Webhook",
                 status=DataSourceStatus.active.value,
             )
             db.add(ds)
         else:
             ds.status = DataSourceStatus.active.value
+            if provider_account_id:
+                ds.provider_account_id = provider_account_id
+        now = datetime.now(timezone.utc)
+        ds.last_sync_at = now
+        ds.last_success_at = now
+        await db.flush()
+        return ds
+
+    @staticmethod
+    async def upsert_provider_api_source(
+        db: AsyncSession,
+        merchant_id: str,
+        provider_name: str,
+        provider_account_id: str,
+    ) -> DataSource:
+        result = await db.execute(
+            select(DataSource).where(
+                DataSource.merchant_id == merchant_id,
+                DataSource.source_type == DataSourceType.provider_api.value,
+                DataSource.provider_account_id == provider_account_id,
+            )
+        )
+        ds = result.scalar_one_or_none()
+        if ds is None:
+            ds = DataSource(
+                id=uuid.uuid4(),
+                merchant_id=merchant_id,
+                source_type=DataSourceType.provider_api.value,
+                provider_name=provider_name,
+                provider_account_id=provider_account_id,
+                display_name=f"{provider_name} API",
+                status=DataSourceStatus.active.value,
+            )
+            db.add(ds)
+        else:
+            ds.provider_name = provider_name
+            ds.status = DataSourceStatus.active.value
+        now = datetime.now(timezone.utc)
+        ds.last_sync_at = now
+        ds.last_success_at = now
         await db.flush()
         return ds
 

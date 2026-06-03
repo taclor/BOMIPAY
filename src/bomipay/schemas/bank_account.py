@@ -33,6 +33,7 @@ class BankAccountResponse(BaseModel):
     bank_name: str
     bank_code: Optional[str]
     account_number_masked: str
+    account_number_last4: str
     account_name: str
     currency: str
     purpose: str

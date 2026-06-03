@@ -247,24 +247,24 @@ class ReconciliationService:
         return sorted(candidates, key=lambda t: (t.created_at or datetime.min, str(t.id)))[0]
 
     @staticmethod
-    def score_match(expected: ExpectedPayment, transaction: Transaction) -> tuple[float, ReconciliationMatchStatus, str]:
+    def score_match(expected: ExpectedPayment, transaction: Transaction) -> tuple[int, ReconciliationMatchStatus, str]:
         reference_matches = ReconciliationService._same_reference(expected, transaction)
         amount_currency_matches = ReconciliationService._same_amount_currency(expected, transaction)
         customer_matches = ReconciliationService._same_customer(expected, transaction)
 
         if reference_matches and amount_currency_matches:
-            return 1.0, ReconciliationMatchStatus.matched, "Exact reference, amount, and currency match"
+            return 10000, ReconciliationMatchStatus.matched, "Exact reference, amount, and currency match"
         if reference_matches and transaction.currency == expected.currency:
             if transaction.amount < expected.amount:
-                return 0.7, ReconciliationMatchStatus.underpaid, "Reference matches but amount is lower than expected"
+                return 7000, ReconciliationMatchStatus.underpaid, "Reference matches but amount is lower than expected"
             if transaction.amount > expected.amount:
-                return 0.7, ReconciliationMatchStatus.overpaid, "Reference matches but amount is higher than expected"
-            return 0.6, ReconciliationMatchStatus.weak, "Reference matches but currency differs"
+                return 7000, ReconciliationMatchStatus.overpaid, "Reference matches but amount is higher than expected"
+            return 6000, ReconciliationMatchStatus.weak, "Reference matches but currency differs"
         if amount_currency_matches and customer_matches:
-            return 0.65, ReconciliationMatchStatus.matched, "Amount and customer match"
+            return 6500, ReconciliationMatchStatus.matched, "Amount and customer match"
         if amount_currency_matches and ReconciliationService._transaction_within_window(expected, transaction):
-            return 0.4, ReconciliationMatchStatus.weak, "Amount and currency match within expected date window"
-        return 0.0, ReconciliationMatchStatus.unmatched, "No deterministic match candidate"
+            return 4000, ReconciliationMatchStatus.weak, "Amount and currency match within expected date window"
+        return 0, ReconciliationMatchStatus.unmatched, "No deterministic match candidate"
 
     @staticmethod
     async def create_reconciliation_run(
@@ -329,7 +329,7 @@ class ReconciliationService:
             ]
             if len(exact_candidates) > 1:
                 selected_status = ReconciliationMatchStatus.ambiguous
-                selected_score = 0.2
+                selected_score = 2000
                 selected_notes = "Multiple exact reference and amount matches found"
                 selected_transaction = None
             elif exact_candidates:
@@ -342,7 +342,7 @@ class ReconciliationService:
                 ]
                 if len(strong_reference_candidates) > 1:
                     selected_status = ReconciliationMatchStatus.ambiguous
-                    selected_score = 0.2
+                    selected_score = 2000
                     selected_notes = "Multiple strong reference-only matches found"
                     selected_transaction = None
                 elif strong_reference_candidates:
@@ -355,7 +355,7 @@ class ReconciliationService:
                     ]
                     if len(customer_candidates) > 1:
                         selected_status = ReconciliationMatchStatus.ambiguous
-                        selected_score = 0.2
+                        selected_score = 2000
                         selected_notes = "Multiple strong customer matches found"
                         selected_transaction = None
                     elif customer_candidates:
@@ -369,7 +369,7 @@ class ReconciliationService:
                         ]
                         if len(weak_candidates) > 1:
                             selected_status = ReconciliationMatchStatus.ambiguous
-                            selected_score = 0.2
+                            selected_score = 2000
                             selected_notes = "Multiple weak window matches found"
                             selected_transaction = None
                         elif weak_candidates:
@@ -377,13 +377,13 @@ class ReconciliationService:
                             selected_score, selected_status, selected_notes = ReconciliationService.score_match(expected, selected_transaction)
                         else:
                             selected_status = ReconciliationMatchStatus.unmatched
-                            selected_score = 0.0
+                            selected_score = 0
                             selected_notes = "No acceptable match candidate found"
                             selected_transaction = None
 
             if selected_transaction and str(selected_transaction.id) in duplicate_tracker:
                 selected_status = ReconciliationMatchStatus.duplicate
-                selected_score = min(selected_score, 0.3)
+                selected_score = min(selected_score, 3000)
                 selected_notes = "Expected payment matches a transaction already matched in this run"
             elif selected_transaction and selected_status not in {ReconciliationMatchStatus.ambiguous, ReconciliationMatchStatus.unmatched}:
                 duplicate_tracker.add(str(selected_transaction.id))
@@ -397,7 +397,7 @@ class ReconciliationService:
                 expected_payment_id=expected.id,
                 transaction_id=selected_transaction.id if selected_transaction else None,
                 match_status=selected_status,
-                confidence_score=selected_score,
+                confidence_score_bps=selected_score,
                 notes=selected_notes,
             )
             db.add(result)
@@ -410,7 +410,7 @@ class ReconciliationService:
                     "expected_payment_id": str(expected.id),
                     "transaction_id": str(selected_transaction.id) if selected_transaction else None,
                     "match_status": selected_status.value,
-                    "confidence_score": selected_score,
+                    "confidence_score_bps": selected_score,
                 },
             )
 

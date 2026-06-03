@@ -1,0 +1,98 @@
+.................F                                                       [100%]
+================================== FAILURES ===================================
+__________________ test_provider_failure_spike_creates_alert __________________
+
+client = <httpx.AsyncClient object at 0x00000216BF053790>
+
+    @pytest.mark.asyncio
+    async def test_provider_failure_spike_creates_alert(client):
+        registration = {
+            "full_name": "Spike Merchant",
+            "email": "spike@example.com",
+            "phone": "+2348000000013",
+            "password": "SpikePass123!",
+            "merchant_name": "Spike Store",
+            "business_type": "services",
+            "country": "NG",
+        }
+    
+        reg_response = await client.post("/api/v1/auth/register", json=registration)
+        assert reg_response.status_code == 201
+        merchant_id = reg_response.json()["merchant_id"]
+    
+        login_response = await client.post(
+            "/api/v1/auth/login",
+            json={"email": registration["email"], "password": registration["password"]},
+        )
+        assert login_response.status_code == 200
+        token = login_response.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+    
+        secret = "test-paystack-secret"
+        for event_id in [3001, 3002, 3003]:
+            payload = {
+                "event": "charge.failed",
+                "data": {
+                    "id": event_id,
+                    "reference": f"SPIKE{event_id}",
+                    "amount": 1000,
+                    "currency": "NGN",
+                    "status": "failed",
+                    "channel": "card",
+                    "gateway_response": "Declined",
+                    "transaction_date": "2026-04-11T12:00:00",
+                    "customer": {"email": "customer@example.com", "phone": "+2348000000006", "first_name": "Customer", "last_name": "Example"},
+                    "metadata": {},
+                },
+            }
+            body = json.dumps(payload).encode("utf-8")
+            signature = hmac.new(secret.encode("utf-8"), body, hashlib.sha512).hexdigest()
+            response = await client.post(
+                "/webhooks/paystack",
+                content=body,
+                headers={"X-Paystack-Signature": signature, "Content-Type": "application/json"},
+            )
+            assert response.status_code == 200
+    
+        alerts_resp = await client.get("/api/v1/alerts?alert_type=provider_error", headers=headers)
+        assert alerts_resp.status_code == 200
+        alerts = alerts_resp.json()
+>       assert any(alert["alert_type"] == "provider_error" for alert in alerts)
+E       assert False
+E        +  where False = any(<generator object test_provider_failure_spike_creates_alert.<locals>.<genexpr> at 0x00000216BF17B920>)
+
+tests\test_operational_visibility.py:451: AssertionError
+---------------------------- Captured stderr call -----------------------------
+{"asctime": "2026-06-03 11:44:04,649", "levelname": "INFO", "name": "bomipay", "message": "request.received", "path": "/api/v1/auth/register", "method": "POST", "request_id": "a74b7c5c-7118-40e8-845e-ad8ee0fc2583"}
+{"asctime": "2026-06-03 11:44:04,650", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://testserver/api/v1/auth/register \"HTTP/1.1 201 Created\""}
+{"asctime": "2026-06-03 11:44:05,103", "levelname": "INFO", "name": "bomipay", "message": "request.received", "path": "/api/v1/auth/login", "method": "POST", "request_id": "9fd3007e-245f-4641-ae5e-94fcb7c021f1"}
+{"asctime": "2026-06-03 11:44:05,104", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://testserver/api/v1/auth/login \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-06-03 11:44:05,247", "levelname": "INFO", "name": "bomipay", "message": "request.received", "path": "/webhooks/paystack", "method": "POST", "request_id": "e29209f5-3206-45d6-9986-4974aea4d213"}
+{"asctime": "2026-06-03 11:44:05,248", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://testserver/webhooks/paystack \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-06-03 11:44:05,391", "levelname": "INFO", "name": "bomipay", "message": "request.received", "path": "/webhooks/paystack", "method": "POST", "request_id": "29fce867-4d79-4544-8688-a8ae292127b5"}
+{"asctime": "2026-06-03 11:44:05,391", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://testserver/webhooks/paystack \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-06-03 11:44:05,552", "levelname": "INFO", "name": "bomipay", "message": "request.received", "path": "/webhooks/paystack", "method": "POST", "request_id": "7acd0318-7359-4f7e-a5dc-954a9dc90934"}
+{"asctime": "2026-06-03 11:44:05,553", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://testserver/webhooks/paystack \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-06-03 11:44:05,563", "levelname": "INFO", "name": "bomipay", "message": "request.received", "path": "/api/v1/alerts", "method": "GET", "request_id": "e902fdf2-a47f-4cd5-abe1-4507755c0c21"}
+{"asctime": "2026-06-03 11:44:05,565", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: GET http://testserver/api/v1/alerts?alert_type=provider_error \"HTTP/1.1 200 OK\""}
+------------------------------ Captured log call ------------------------------
+INFO     bomipay:main.py:84 request.received
+INFO     httpx:_client.py:1740 HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 201 Created"
+INFO     bomipay:main.py:84 request.received
+INFO     httpx:_client.py:1740 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     bomipay:main.py:84 request.received
+INFO     httpx:_client.py:1740 HTTP Request: POST http://testserver/webhooks/paystack "HTTP/1.1 200 OK"
+INFO     bomipay:main.py:84 request.received
+INFO     httpx:_client.py:1740 HTTP Request: POST http://testserver/webhooks/paystack "HTTP/1.1 200 OK"
+INFO     bomipay:main.py:84 request.received
+INFO     httpx:_client.py:1740 HTTP Request: POST http://testserver/webhooks/paystack "HTTP/1.1 200 OK"
+INFO     bomipay:main.py:84 request.received
+INFO     httpx:_client.py:1740 HTTP Request: GET http://testserver/api/v1/alerts?alert_type=provider_error "HTTP/1.1 200 OK"
+============================== warnings summary ===============================
+C:\Users\ernes\AppData\Roaming\Python\Python311\site-packages\pythonjsonlogger\jsonlogger.py:11
+  C:\Users\ernes\AppData\Roaming\Python\Python311\site-packages\pythonjsonlogger\jsonlogger.py:11: DeprecationWarning: pythonjsonlogger.jsonlogger has been moved to pythonjsonlogger.json
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_operational_visibility.py::test_provider_failure_spike_creates_alert

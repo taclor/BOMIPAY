@@ -63,6 +63,7 @@ async def test_create_and_list_bank_account(client):
     # account number must be masked
     assert "0123456789" not in data["account_number_masked"]
     assert data["account_number_masked"].endswith("6789")
+    assert data["account_number_last4"] == "6789"
     assert data["verification_status"] == "unverified"
     assert data["status"] == "active"
 

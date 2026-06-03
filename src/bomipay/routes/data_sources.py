@@ -45,6 +45,7 @@ async def create_data_source(
         source_type=payload.source_type,
         display_name=payload.display_name,
         provider_name=payload.provider_name,
+        provider_account_id=payload.provider_account_id,
         configuration_json=payload.configuration_json,
     )
     log_audit_event(

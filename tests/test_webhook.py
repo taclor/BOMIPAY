@@ -35,10 +35,10 @@ async def test_paystack_webhook_ingestion_and_idempotency(client, db_session):
     response = await client.post(
         "/webhooks/paystack",
         content=body,
-        headers={"X-Paystack-Signature": signature, "Content-Type": "application/json"},
+        headers={"X-Paystack-Signature": "invalid-signature", "Content-Type": "application/json"},
     )
-    assert response.status_code == 400
-    assert response.json()["detail"] == "Merchant association missing"
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Invalid webhook signature or provider connection"
 
     registration = {
         "full_name": "Paystack Merchant",
@@ -53,7 +53,28 @@ async def test_paystack_webhook_ingestion_and_idempotency(client, db_session):
     assert reg_response.status_code == 201
     merchant_id = reg_response.json()["merchant_id"]
 
-    payload["data"]["metadata"]["merchant_id"] = merchant_id
+    login_response = await client.post(
+        "/api/v1/auth/login",
+        json={"email": registration["email"], "password": registration["password"]},
+    )
+    assert login_response.status_code == 200
+    access_token = login_response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    connect_response = await client.post(
+        "/api/v1/providers/connect",
+        json={
+            "merchant_id": merchant_id,
+            "provider_name": "paystack",
+            "credentials": {
+                "api_key": "pk_test_example",
+                "secret_key": secret,
+            },
+        },
+        headers=headers,
+    )
+    assert connect_response.status_code == 200
+
     body = json.dumps(payload).encode("utf-8")
     signature = hmac.new(secret.encode("utf-8"), body, hashlib.sha512).hexdigest()
 
@@ -106,6 +127,10 @@ async def test_paystack_webhook_ingestion_and_idempotency(client, db_session):
     assert alerts.status_code == 200
     assert len(alerts.json()) == 1
     alert_id = alerts.json()[0]["id"]
+
+    sources = await client.get(f"/api/v1/data-sources?merchant_id={merchant_id}", headers=headers)
+    assert sources.status_code == 200
+    assert any(s["source_type"] == "provider_webhook" and s["provider_name"] == "paystack" for s in sources.json())
 
     ack = await client.patch(
         f"/api/v1/alerts/{alert_id}",

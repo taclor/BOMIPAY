@@ -13,6 +13,14 @@ class AppSettings(BaseSettings):
     jwt_access_token_expire_seconds: int = Field(900, alias="JWT_ACCESS_TOKEN_EXPIRE_SECONDS")
     jwt_refresh_token_expire_seconds: int = Field(604800, alias="JWT_REFRESH_TOKEN_EXPIRE_SECONDS")
     provider_encryption_key: str | None = Field(None, alias="PROVIDER_ENCRYPTION_KEY")
+    cors_allowed_origins: str = Field(
+        "http://localhost:3000,http://127.0.0.1:3000",
+        alias="CORS_ALLOWED_ORIGINS",
+    )
+
+    @property
+    def cors_allowed_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_allowed_origins.split(",") if origin.strip()]
 
 
 settings = AppSettings()

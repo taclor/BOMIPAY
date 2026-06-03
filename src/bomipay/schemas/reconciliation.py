@@ -54,7 +54,7 @@ class ReconciliationResultResponse(BaseModel):
     expected_payment_id: UUID | str
     transaction_id: Optional[UUID | str]
     match_status: str
-    confidence_score: float
+    confidence_score_bps: int
     notes: Optional[str]
     created_at: datetime
     updated_at: datetime

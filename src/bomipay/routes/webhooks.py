@@ -1,13 +1,15 @@
 import os
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import get_db
 from ..services.providers import ProviderAdapterRegistry
-from ..services.paystack_adapter import PaystackAdapter
+from ..services.paystack_adapter import PaystackAdapter  # noqa: F401
 from ..services.transaction import TransactionService
 from ..services.merchant import ProviderAccountService
 from ..services.encryption import decrypt_secret
+from ..services.data_source import DataSourceService
 
 router = APIRouter()
 
@@ -23,26 +25,45 @@ async def provider_webhook(
     if adapter is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Provider adapter not found")
 
-    normalized = adapter.normalize_webhook(body)
+    header_map = {k.lower(): v for k, v in request.headers.items()}
+    provider_secret = None
+    resolved_account = None
+
+    for provider_account in await ProviderAccountService.get_active_provider_accounts_for_provider(db, provider_name):
+        secret = decrypt_secret(provider_account.secret_encrypted)
+        if adapter.verify_signature(header_map, body, secret):
+            provider_secret = secret
+            resolved_account = provider_account
+            break
+
+    if resolved_account is None:
+        env_secret = os.getenv(f"{provider_name.upper()}_WEBHOOK_SECRET")
+        if env_secret and adapter.verify_signature(header_map, body, env_secret):
+            provider_secret = env_secret
+            accounts = await ProviderAccountService.get_active_provider_accounts_for_provider(db, provider_name)
+            if len(accounts) == 1:
+                resolved_account = accounts[0]
+
+    if resolved_account is None or not provider_secret:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid webhook signature or provider connection")
+
+    try:
+        normalized = adapter.process_webhook(header_map, body, provider_secret)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
+
     transaction_data = normalized["transaction_data"]
     provider_event_id = normalized["provider_event_id"]
     event_type = normalized["event_type"]
     provider_payload = normalized["provider_payload"]
 
-    merchant_id = transaction_data.get("merchant_id")
-    if merchant_id is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Merchant association missing")
-
-    provider_secret = os.getenv(f"{provider_name.upper()}_WEBHOOK_SECRET")
-    if not provider_secret:
-        provider_account = await ProviderAccountService.get_provider_account_for_merchant(
-            db, merchant_id, provider_name
-        )
-        if provider_account:
-            provider_secret = decrypt_secret(provider_account.secret_encrypted)
-
-    if not adapter.verify_signature({k.lower(): v for k, v in request.headers.items()}, body, provider_secret or ""):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid webhook signature")
+    merchant_id = str(resolved_account.merchant_id)
+    await DataSourceService.upsert_webhook_source(
+        db,
+        merchant_id=merchant_id,
+        provider_name=provider_name,
+        provider_account_id=str(resolved_account.id),
+    )
 
     await TransactionService.process_provider_event(
         db,

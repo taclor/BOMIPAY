@@ -15,6 +15,7 @@ from ..services.audit import log_audit_event
 from ..services.encryption import decrypt_secret
 from ..services.merchant import ProviderAccountService
 from ..services.providers import ProviderAdapterRegistry
+from ..services.data_source import DataSourceService
 
 router = APIRouter()
 
@@ -51,6 +52,12 @@ async def connect_provider(
         provider_name=payload.provider_name,
         api_key=payload.credentials.api_key,
         secret=payload.credentials.secret_key,
+    )
+    await DataSourceService.upsert_provider_api_source(
+        db,
+        merchant_id=str(merchant_id),
+        provider_name=payload.provider_name,
+        provider_account_id=str(account.id),
     )
     log_audit_event(
         db,

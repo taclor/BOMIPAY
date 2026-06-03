@@ -1,7 +1,7 @@
 """Add bank_accounts table
 
 Revision ID: 0009_bank_accounts
-Revises: 0008_add_alert_fields
+Revises: 0008
 Create Date: 2026-06-03 00:00:00.000000
 """
 
@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "0009_bank_accounts"
-down_revision = "0008_add_alert_fields"
+down_revision = "0008"
 branch_labels = None
 depends_on = None
 

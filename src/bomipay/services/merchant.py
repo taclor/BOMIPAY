@@ -129,3 +129,13 @@ class ProviderAccountService:
     async def get_provider_account(db: AsyncSession, account_id):
         result = await db.execute(select(ProviderAccount).where(ProviderAccount.id == account_id))
         return result.scalars().first()
+
+    @staticmethod
+    async def get_active_provider_accounts_for_provider(db: AsyncSession, provider_name: str) -> list[ProviderAccount]:
+        result = await db.execute(
+            select(ProviderAccount)
+            .where(ProviderAccount.provider_name == provider_name)
+            .where(ProviderAccount.status == ProviderAccountStatus.active.value)
+            .order_by(ProviderAccount.created_at.desc())
+        )
+        return list(result.scalars().all())

@@ -32,6 +32,7 @@ class DataSource(Base, TimestampMixin):
     merchant_id = Column(GUID(), ForeignKey("merchants.id"), nullable=False, index=True)
     source_type = Column(String(64), nullable=False)
     provider_name = Column(String(128), nullable=True)
+    provider_account_id = Column(GUID(), ForeignKey("provider_accounts.id"), nullable=True, index=True)
     display_name = Column(String(255), nullable=False)
     status = Column(String(32), nullable=False, default=DataSourceStatus.pending_setup.value)
     last_sync_at = Column(DateTime(timezone=True), nullable=True)

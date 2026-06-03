@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import JSON, Column, DateTime, Enum, Float, ForeignKey, Integer, String
+from sqlalchemy import JSON, Column, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from .audit import AuditLog
@@ -92,7 +92,7 @@ class ReconciliationResult(Base, TimestampMixin):
     expected_payment_id = Column(GUID(), ForeignKey("expected_payments.id"), nullable=False, index=True)
     transaction_id = Column(GUID(), ForeignKey("transactions.id"), nullable=True, index=True)
     match_status = Column(Enum(ReconciliationMatchStatus), nullable=False)
-    confidence_score = Column(Float, nullable=False, default=0.0)
+    confidence_score_bps = Column(Integer, nullable=False, default=0)
     notes = Column(String(1024), nullable=True)
 
     reconciliation_run = relationship("ReconciliationRun", back_populates="results")

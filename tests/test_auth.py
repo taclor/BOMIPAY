@@ -1,4 +1,9 @@
+import inspect
+
 import pytest
+
+from bomipay.main import app, lifespan
+from bomipay.services.security import create_refresh_token
 
 
 @pytest.mark.asyncio
@@ -59,3 +64,20 @@ async def test_duplicate_registration_is_conflict(client):
 async def test_auth_me_requires_valid_token(client):
     response = await client.get("/api/v1/auth/me")
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_rejects_non_uuid_subject(client):
+    token = create_refresh_token("not-a-uuid")
+    response = await client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": token},
+    )
+    assert response.status_code == 401
+
+
+def test_app_lifespan_and_cors_are_hardened():
+    assert inspect.isasyncgenfunction(lifespan.__wrapped__)
+    cors_middleware = next(m for m in app.user_middleware if m.cls.__name__ == "CORSMiddleware")
+    assert cors_middleware.kwargs["allow_origins"]
+    assert "*" not in cors_middleware.kwargs["allow_origins"]

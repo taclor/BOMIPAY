@@ -38,6 +38,17 @@ async def test_transaction_query_filters_and_detail(client):
     token = login_response.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
 
+    connect_response = await client.post(
+        "/api/v1/providers/connect",
+        json={
+            "merchant_id": merchant_id,
+            "provider_name": "paystack",
+            "credentials": {"api_key": "pk_vis_test", "secret_key": "test-paystack-secret"},
+        },
+        headers=headers,
+    )
+    assert connect_response.status_code == 200
+
     secret = "test-paystack-secret"
     for event_id, status in [(1001, "success"), (1002, "failed")]:
         payload = {
@@ -57,7 +68,7 @@ async def test_transaction_query_filters_and_detail(client):
                     "first_name": "Customer",
                     "last_name": "Example",
                 },
-                "metadata": {"merchant_id": merchant_id},
+                "metadata": {},
             },
         }
         body = json.dumps(payload).encode("utf-8")
@@ -114,6 +125,17 @@ async def test_alert_acknowledge_and_resolve(client):
     token = login_response.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
 
+    connect_response = await client.post(
+        "/api/v1/providers/connect",
+        json={
+            "merchant_id": merchant_id,
+            "provider_name": "paystack",
+            "credentials": {"api_key": "pk_alert_test", "secret_key": "test-paystack-secret"},
+        },
+        headers=headers,
+    )
+    assert connect_response.status_code == 200
+
     payload = {
         "event": "charge.failed",
         "data": {
@@ -126,7 +148,7 @@ async def test_alert_acknowledge_and_resolve(client):
             "gateway_response": "Declined",
             "transaction_date": "2026-04-11T12:00:00",
             "customer": {"email": "customer@example.com", "phone": "+2348000000005", "first_name": "Customer", "last_name": "Example"},
-            "metadata": {"merchant_id": merchant_id},
+            "metadata": {},
         },
     }
     body = json.dumps(payload).encode("utf-8")
@@ -233,6 +255,17 @@ async def test_notification_retry_logic_is_safe(client, db_session, monkeypatch)
     assert login_response.status_code == 200
     token = login_response.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
+
+    connect_response = await client.post(
+        "/api/v1/providers/connect",
+        json={
+            "merchant_id": merchant_id,
+            "provider_name": "paystack",
+            "credentials": {"api_key": "pk_spike_test", "secret_key": "test-paystack-secret"},
+        },
+        headers=headers,
+    )
+    assert connect_response.status_code == 200
 
     notification = await NotificationService.create_notification(
         db_session,
@@ -386,6 +419,17 @@ async def test_provider_failure_spike_creates_alert(client):
     token = login_response.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
 
+    connect_response = await client.post(
+        "/api/v1/providers/connect",
+        json={
+            "merchant_id": merchant_id,
+            "provider_name": "paystack",
+            "credentials": {"api_key": "pk_spike_test", "secret_key": "test-paystack-secret"},
+        },
+        headers=headers,
+    )
+    assert connect_response.status_code == 200
+
     secret = "test-paystack-secret"
     for event_id in [3001, 3002, 3003]:
         payload = {
@@ -400,7 +444,7 @@ async def test_provider_failure_spike_creates_alert(client):
                 "gateway_response": "Declined",
                 "transaction_date": "2026-04-11T12:00:00",
                 "customer": {"email": "customer@example.com", "phone": "+2348000000006", "first_name": "Customer", "last_name": "Example"},
-                "metadata": {"merchant_id": merchant_id},
+                "metadata": {},
             },
         }
         body = json.dumps(payload).encode("utf-8")

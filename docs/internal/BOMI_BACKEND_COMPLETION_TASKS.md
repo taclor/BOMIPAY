@@ -1,0 +1,32 @@
+# Bomi Pay Backend Completion Tasks
+
+- [x] TASK-001: Fix critical backend foundation issues
+  - Note: Completed. Converted lifespan to async, hardened CORS to env-based origins, enforced UUID parsing for refresh token subject, added transaction-event uniqueness on provider_name+provider_event_id, resolved webhook merchant from signed provider connection instead of metadata trust, migrated confidence to confidence_score_bps, extended provider adapter contract, and added focused regression coverage (auth/webhook/AI).
+- [x] TASK-002: Add Bank Account Management
+  - Note: Completed. Added persisted account last4, masked response contract, verification adapter seam with stub implementation, RBAC/tenant-safe CRUD + verify endpoints, audit events, and coverage updates for masking and last4 behavior.
+- [x] TASK-003: Add Data Source Management
+  - Note: Completed. Added provider_account_id linkage, provider connect now creates/updates provider_api data sources, webhook ingestion updates provider_webhook source health/timestamps, and tests validate tenant safety plus provider/data-source linkage.
+- [ ] TASK-004: Add Bank Statement Import
+  - Note: Pending.
+- [ ] TASK-005: Add Provider Sync Jobs
+  - Note: Pending.
+- [ ] TASK-006: Add Incident Center
+  - Note: Pending.
+- [ ] TASK-007: Add Money-at-Risk Analytics
+  - Note: Pending.
+- [ ] TASK-008: Add Mission Control Dashboard API
+  - Note: Pending.
+- [ ] TASK-009: Add Unified Payment Timeline API
+  - Note: Pending.
+- [ ] TASK-010: Add Action Center API
+  - Note: Pending.
+- [ ] TASK-011: Add Payment Graph / Ontology API
+  - Note: Pending.
+- [ ] TASK-012: Extend AI Assistant
+  - Note: Pending.
+- [ ] TASK-013: Add complete tests
+  - Note: Pending.
+- [ ] TASK-014: Run migrations and test suite
+  - Note: Pending.
+- [ ] TASK-015: Final production-readiness review
+  - Note: Pending.

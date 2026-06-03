@@ -40,13 +40,13 @@ async def test_ai_query_returns_required_fields(client):
     )
     assert resp.status_code == 200
     data = resp.json()
-    for key in ("query", "query_category", "merchant_id", "answer", "confidence",
+    for key in ("query", "query_category", "merchant_id", "answer", "confidence_score_bps",
                 "cited_records", "suggested_actions", "context_used", "generated_at"):
         assert key in data, f"Missing key: {key}"
 
 
 @pytest.mark.asyncio
-async def test_ai_confidence_is_between_0_and_1(client):
+async def test_ai_confidence_is_between_0_and_10000(client):
     mid, headers = await _register_and_login(
         client, "ai_conf@example.com", "+2348007000002"
     )
@@ -56,9 +56,9 @@ async def test_ai_confidence_is_between_0_and_1(client):
         headers=headers,
     )
     assert resp.status_code == 200
-    confidence = resp.json()["confidence"]
-    assert isinstance(confidence, float)
-    assert 0.0 <= confidence <= 1.0
+    confidence = resp.json()["confidence_score_bps"]
+    assert isinstance(confidence, int)
+    assert 0 <= confidence <= 10000
 
 
 @pytest.mark.asyncio

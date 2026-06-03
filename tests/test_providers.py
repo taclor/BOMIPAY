@@ -54,6 +54,14 @@ async def test_provider_connect_and_list_for_merchant(client):
     assert health["provider_name"] == "paystack"
     assert health["connected"] is True
 
+    ds_resp = await client.get(f"/api/v1/data-sources?merchant_id={merchant_id}", headers=headers)
+    assert ds_resp.status_code == 200
+    provider_sources = [
+        ds for ds in ds_resp.json()
+        if ds["source_type"] == "provider_api" and ds.get("provider_account_id") == payload["data"]["provider_account_id"]
+    ]
+    assert len(provider_sources) == 1
+
 
 @pytest.mark.asyncio
 async def test_provider_connect_forbidden_for_other_merchant(client, db_session):

@@ -9,6 +9,7 @@ class DataSourceCreate(BaseModel):
     merchant_id: Optional[str] = None
     source_type: str
     provider_name: Optional[str] = None
+    provider_account_id: Optional[str] = None
     display_name: str
     configuration_json: Optional[dict] = None
 
@@ -18,6 +19,7 @@ class DataSourceUpdate(BaseModel):
     status: Optional[str] = None
     configuration_json: Optional[dict] = None
     provider_name: Optional[str] = None
+    provider_account_id: Optional[str] = None
 
 
 class DataSourceResponse(BaseModel):
@@ -27,6 +29,7 @@ class DataSourceResponse(BaseModel):
     merchant_id: UUID | str
     source_type: str
     provider_name: Optional[str]
+    provider_account_id: Optional[UUID | str]
     display_name: str
     status: str
     last_sync_at: Optional[datetime]
@@ -35,7 +38,7 @@ class DataSourceResponse(BaseModel):
     last_error_message: Optional[str]
     configuration_json: Optional[dict]
 
-    @field_serializer("id", "merchant_id")
+    @field_serializer("id", "merchant_id", "provider_account_id")
     def serialize_uuid(self, value: UUID | str, _info) -> str:
         return str(value) if value else None
 
