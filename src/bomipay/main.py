@@ -32,7 +32,7 @@ configure_logging()
 logger = logging.getLogger("bomipay")
 
 @asynccontextmanager
-def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI):
     logger.info("service.startup", extra={"environment": settings.environment})
     yield
     logger.info("service.shutdown")
