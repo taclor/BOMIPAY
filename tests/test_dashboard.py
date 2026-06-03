@@ -33,6 +33,7 @@ from bomipay.models.incident import Incident, IncidentStatus
 from bomipay.models.provider_account import ProviderAccount
 from bomipay.models.provider_sync_job import ProviderSyncJob
 from bomipay.services.dashboard import DashboardService
+from bomipay.services.encryption import encrypt_secret
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
@@ -174,8 +175,8 @@ async def test_provider(db_session: AsyncSession, test_merchant: Merchant):
         merchant_id=test_merchant.id,
         provider_name="paystack",
         status="active",
-        api_key_encrypted="test_key",
-        secret_encrypted="test_secret",
+        api_key_encrypted=encrypt_secret("test_key"),
+        secret_encrypted=encrypt_secret("test_secret"),
     )
     db_session.add(provider)
     await db_session.commit()

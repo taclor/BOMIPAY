@@ -17,6 +17,10 @@ class AppSettings(BaseSettings):
         "http://localhost:3000,http://127.0.0.1:3000",
         alias="CORS_ALLOWED_ORIGINS",
     )
+    sentry_dsn: str | None = Field(None, alias="SENTRY_DSN")
+    rate_limit_enabled: bool = Field(True, alias="RATE_LIMIT_ENABLED")
+    docs_enabled: bool = Field(True, alias="DOCS_ENABLED")
+    max_upload_size_bytes: int = Field(10 * 1024 * 1024, alias="MAX_UPLOAD_SIZE_BYTES")
 
     @property
     def cors_allowed_origins_list(self) -> list[str]:
