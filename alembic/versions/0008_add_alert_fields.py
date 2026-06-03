@@ -16,18 +16,22 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Add new columns to alerts table
-    op.add_column('alerts', sa.Column('source_type', sa.String(64), nullable=True))
-    op.add_column('alerts', sa.Column('rule_code', sa.String(128), nullable=True))
-    op.add_column('alerts', sa.Column('occurrence_count', sa.Integer, nullable=False, server_default='1'))
-    op.add_column('alerts', sa.Column('acknowledged_at', sa.DateTime(timezone=True), nullable=True))
-    op.add_column('alerts', sa.Column('resolved_at', sa.DateTime(timezone=True), nullable=True))
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    existing_columns = {column["name"] for column in inspector.get_columns("alerts")}
+
+    if "source_type" not in existing_columns:
+        op.add_column("alerts", sa.Column("source_type", sa.String(64), nullable=True))
+    if "rule_code" not in existing_columns:
+        op.add_column("alerts", sa.Column("rule_code", sa.String(128), nullable=True))
+    if "occurrence_count" not in existing_columns:
+        op.add_column("alerts", sa.Column("occurrence_count", sa.Integer, nullable=False, server_default="1"))
+    if "acknowledged_at" not in existing_columns:
+        op.add_column("alerts", sa.Column("acknowledged_at", sa.DateTime(timezone=True), nullable=True))
+    if "resolved_at" not in existing_columns:
+        op.add_column("alerts", sa.Column("resolved_at", sa.DateTime(timezone=True), nullable=True))
 
 
 def downgrade() -> None:
-    # Remove columns from alerts table
-    op.drop_column('alerts', 'resolved_at')
-    op.drop_column('alerts', 'acknowledged_at')
-    op.drop_column('alerts', 'occurrence_count')
-    op.drop_column('alerts', 'rule_code')
-    op.drop_column('alerts', 'source_type')
+    # No-op: these columns are managed by earlier migrations in the linear chain.
+    pass

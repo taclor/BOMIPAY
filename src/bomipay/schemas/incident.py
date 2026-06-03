@@ -72,3 +72,13 @@ class IncidentResponse(BaseModel):
     @field_serializer("id", "merchant_id")
     def serialize_uuid(self, value: UUID | str, _info) -> str:
         return str(value) if value else None
+
+
+class IncidentStatsResponse(BaseModel):
+    """Statistics about incidents for a merchant."""
+    total_incidents: int
+    by_status: dict[str, int]
+    by_severity: dict[str, int]
+    by_type: dict[str, int]
+    avg_resolution_time_seconds: Optional[int]
+    critical_incidents_24h: int

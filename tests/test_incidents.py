@@ -1,6 +1,6 @@
 """Tests for Incident Center module."""
 import pytest
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from bomipay.models.user import Role
 from bomipay.services.security import create_access_token
@@ -45,11 +45,11 @@ async def _finance_headers(db_session, email: str, phone: str, merchant_id) -> d
     return {"Authorization": f"Bearer {token}"}
 
 
-def _incident_payload(merchant_id: str, title: str = "Provider down") -> dict:
+def _incident_payload(merchant_id: str, title: str = "Provider down", incident_type: str = "provider_failure_spike") -> dict:
     return {
         "merchant_id": merchant_id,
         "title": title,
-        "incident_type": "provider_failure_spike",
+        "incident_type": incident_type,
         "severity": "high",
         "started_at": datetime.now(timezone.utc).isoformat(),
         "summary": "Multiple transactions failed due to provider timeout.",
@@ -230,3 +230,144 @@ async def test_incident_filter_by_status(client, db_session):
 async def test_incidents_require_auth(client):
     resp = await client.get("/api/v1/incidents")
     assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_incident_filter_by_severity(client, db_session):
+    """Test filtering incidents by severity level."""
+    mid, headers = await _register_and_login(
+        client, "inc_severity@example.com", "+2348004000010"
+    )
+    fin_headers = await _finance_headers(db_session, "inc_severity_fin@example.com", "+2348004000110", mid)
+    
+    # Create incidents with different severities
+    for severity in ["low", "medium", "high", "critical"]:
+        payload = _incident_payload(mid, f"Severity {severity}")
+        payload["severity"] = severity
+        await client.post("/api/v1/incidents", json=payload, headers=fin_headers)
+    
+    # Filter by critical
+    resp = await client.get(
+        f"/api/v1/incidents?merchant_id={mid}&severity=critical", headers=headers
+    )
+    assert resp.status_code == 200
+    results = resp.json()
+    assert all(i["severity"] == "critical" for i in results)
+
+
+@pytest.mark.asyncio
+async def test_incident_filter_by_type(client, db_session):
+    """Test filtering incidents by type."""
+    mid, headers = await _register_and_login(
+        client, "inc_type@example.com", "+2348004000011"
+    )
+    fin_headers = await _finance_headers(db_session, "inc_type_fin@example.com", "+2348004000111", mid)
+    
+    # Create incidents with different types
+    for incident_type in ["provider_failure_spike", "settlement_delay", "webhook_failure"]:
+        await client.post(
+            "/api/v1/incidents", 
+            json=_incident_payload(mid, f"Type {incident_type}", incident_type), 
+            headers=fin_headers
+        )
+    
+    # Filter by type
+    resp = await client.get(
+        f"/api/v1/incidents?merchant_id={mid}&incident_type=settlement_delay", headers=headers
+    )
+    assert resp.status_code == 200
+    results = resp.json()
+    assert all(i["incident_type"] == "settlement_delay" for i in results)
+
+
+@pytest.mark.asyncio
+async def test_incident_statistics(client, db_session):
+    """Test incident statistics endpoint."""
+    mid, headers = await _register_and_login(
+        client, "inc_stats@example.com", "+2348004000012"
+    )
+    fin_headers = await _finance_headers(db_session, "inc_stats_fin@example.com", "+2348004000112", mid)
+    
+    # Create multiple incidents
+    for i in range(3):
+        await client.post(
+            "/api/v1/incidents",
+            json=_incident_payload(mid, f"Stats Test {i}"),
+            headers=fin_headers
+        )
+    
+    # Get stats
+    resp = await client.get(
+        f"/api/v1/incidents/stats?merchant_id={mid}", headers=headers
+    )
+    assert resp.status_code == 200
+    stats = resp.json()
+    assert stats["total_incidents"] >= 3
+    assert stats["by_status"]["open"] >= 3
+    assert "by_severity" in stats
+    assert "by_type" in stats
+    assert "critical_incidents_24h" in stats
+
+
+@pytest.mark.asyncio
+async def test_incident_auto_escalation_after_duration(client, db_session):
+    """Test auto-escalation when incident is open for >1 hour."""
+    from bomipay.services.incident import IncidentService
+    
+    mid, headers = await _register_and_login(
+        client, "inc_escalate@example.com", "+2348004000013"
+    )
+    fin_headers = await _finance_headers(db_session, "inc_escalate_fin@example.com", "+2348004000113", mid)
+    
+    # Create low-severity incident
+    payload = _incident_payload(mid, "Escalation Test")
+    payload["severity"] = "low"
+    create_resp = await client.post("/api/v1/incidents", json=payload, headers=fin_headers)
+    inc_id = create_resp.json()["id"]
+    
+    # Fetch incident and manually set created_at to 2 hours ago for testing
+    incident = await IncidentService.get_by_id(db_session, inc_id)
+    original_created_at = incident.created_at
+    
+    # Update created_at to simulate old incident
+    from datetime import datetime as dt, timezone
+    incident.created_at = dt.now(timezone.utc) - timedelta(hours=2)
+    await db_session.flush()
+    
+    # Call auto-escalate
+    escalated = await IncidentService.auto_escalate_if_needed(db_session, incident)
+    await db_session.commit()
+    
+    # Verify escalated to critical
+    assert escalated.severity == "critical"
+    
+    # Restore for cleanup
+    incident.created_at = original_created_at
+
+
+@pytest.mark.asyncio
+async def test_incident_multiple_filters_combined(client, db_session):
+    """Test combining multiple filters."""
+    mid, headers = await _register_and_login(
+        client, "inc_multi_filter@example.com", "+2348004000014"
+    )
+    fin_headers = await _finance_headers(db_session, "inc_multi_filter_fin@example.com", "+2348004000114", mid)
+    
+    # Create diverse incidents
+    for status_val in ["open", "acknowledged"]:
+        for severity_val in ["high", "low"]:
+            payload = _incident_payload(mid, f"Multi {status_val} {severity_val}")
+            payload["severity"] = severity_val
+            resp = await client.post("/api/v1/incidents", json=payload, headers=fin_headers)
+            inc_id = resp.json()["id"]
+            if status_val == "acknowledged":
+                await client.post(f"/api/v1/incidents/{inc_id}/acknowledge", headers=headers)
+    
+    # Filter by status AND severity
+    resp = await client.get(
+        f"/api/v1/incidents?merchant_id={mid}&status=open&severity=high", headers=headers
+    )
+    assert resp.status_code == 200
+    results = resp.json()
+    assert all(i["status"] == "open" and i["severity"] == "high" for i in results)
+

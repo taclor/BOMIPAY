@@ -1,12 +1,12 @@
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.incident import Incident, IncidentEvent, IncidentStatus
+from ..models.incident import Incident, IncidentEvent, IncidentStatus, IncidentSeverity
 
 logger = logging.getLogger("bomipay")
 
@@ -59,6 +59,7 @@ class IncidentService:
         merchant_id: str,
         status: Optional[str] = None,
         severity: Optional[str] = None,
+        incident_type: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
     ) -> list[Incident]:
@@ -67,6 +68,8 @@ class IncidentService:
             stmt = stmt.where(Incident.status == status)
         if severity:
             stmt = stmt.where(Incident.severity == severity)
+        if incident_type:
+            stmt = stmt.where(Incident.incident_type == incident_type)
         stmt = stmt.order_by(Incident.created_at.desc()).offset(offset).limit(limit)
         result = await db.execute(stmt)
         return list(result.scalars().all())
@@ -161,3 +164,128 @@ class IncidentService:
             .order_by(IncidentEvent.created_at)
         )
         return list(result.scalars().all())
+
+    @staticmethod
+    async def auto_escalate_if_needed(
+        db: AsyncSession,
+        incident: Incident,
+        actor_user_id: Optional[str] = None,
+    ) -> Incident:
+        """Auto-escalate incident based on duration or pattern.
+        
+        Rules:
+        - Escalate if open/investigating for >1 hour and severity < critical
+        - Escalate if multiple incidents of same type within 6 hours
+        """
+        if incident.status not in (IncidentStatus.open.value, IncidentStatus.investigating.value):
+            return incident
+        
+        now = datetime.now(timezone.utc)
+        time_since_creation = now - incident.created_at
+        
+        # Rule 1: Escalate if open for >1 hour
+        if time_since_creation > timedelta(hours=1):
+            if incident.severity != IncidentSeverity.critical.value:
+                old_severity = incident.severity
+                incident.severity = IncidentSeverity.critical.value
+                await db.flush()
+                await IncidentService._append_event(
+                    db, incident.id, "escalated", actor_user_id,
+                    f"Incident automatically escalated from {old_severity} to critical due to duration",
+                    {"previous_severity": old_severity, "reason": "open_duration_exceeded_1h"},
+                )
+        
+        # Rule 2: Check for multiple incidents of same type within 6 hours
+        six_hours_ago = now - timedelta(hours=6)
+        stmt = select(func.count(Incident.id)).where(
+            and_(
+                Incident.merchant_id == incident.merchant_id,
+                Incident.incident_type == incident.incident_type,
+                Incident.created_at >= six_hours_ago,
+                Incident.id != incident.id,
+            )
+        )
+        result = await db.execute(stmt)
+        similar_count = result.scalar()
+        
+        if similar_count and similar_count >= 2 and incident.severity not in (
+            IncidentSeverity.high.value,
+            IncidentSeverity.critical.value,
+        ):
+            old_severity = incident.severity
+            incident.severity = IncidentSeverity.high.value
+            await db.flush()
+            await IncidentService._append_event(
+                db, incident.id, "escalated", actor_user_id,
+                f"Incident escalated to high due to multiple similar incidents",
+                {"previous_severity": old_severity, "reason": "pattern_detected", "similar_count": similar_count},
+            )
+        
+        return incident
+
+    @staticmethod
+    async def get_statistics(
+        db: AsyncSession,
+        merchant_id: str,
+    ) -> dict:
+        """Get incident statistics for a merchant."""
+        stmt_total = select(func.count(Incident.id)).where(Incident.merchant_id == merchant_id)
+        result = await db.execute(stmt_total)
+        total_incidents = result.scalar() or 0
+        
+        # Count by status
+        statuses = {}
+        for status in IncidentStatus:
+            stmt = select(func.count(Incident.id)).where(
+                and_(Incident.merchant_id == merchant_id, Incident.status == status.value)
+            )
+            result = await db.execute(stmt)
+            statuses[status.value] = result.scalar() or 0
+        
+        # Count by severity
+        severities = {}
+        for severity in IncidentSeverity:
+            stmt = select(func.count(Incident.id)).where(
+                and_(Incident.merchant_id == merchant_id, Incident.severity == severity.value)
+            )
+            result = await db.execute(stmt)
+            severities[severity.value] = result.scalar() or 0
+        
+        # Count by type
+        stmt_types = select(Incident.incident_type, func.count(Incident.id)).where(
+            Incident.merchant_id == merchant_id
+        ).group_by(Incident.incident_type)
+        result = await db.execute(stmt_types)
+        types = {row[0]: row[1] for row in result.all()}
+        
+        # Average resolution time (for resolved incidents)
+        stmt_avg = select(func.avg(Incident.ended_at - Incident.created_at)).where(
+            and_(
+                Incident.merchant_id == merchant_id,
+                Incident.ended_at.is_not(None),
+            )
+        )
+        result = await db.execute(stmt_avg)
+        avg_duration = result.scalar()
+        avg_resolution_time_seconds = int(avg_duration.total_seconds()) if avg_duration else None
+        
+        # Critical incidents in last 24 hours
+        twenty_four_hours_ago = datetime.now(timezone.utc) - timedelta(hours=24)
+        stmt_critical = select(func.count(Incident.id)).where(
+            and_(
+                Incident.merchant_id == merchant_id,
+                Incident.severity == IncidentSeverity.critical.value,
+                Incident.created_at >= twenty_four_hours_ago,
+            )
+        )
+        result = await db.execute(stmt_critical)
+        critical_in_24h = result.scalar() or 0
+        
+        return {
+            "total_incidents": total_incidents,
+            "by_status": statuses,
+            "by_severity": severities,
+            "by_type": types,
+            "avg_resolution_time_seconds": avg_resolution_time_seconds,
+            "critical_incidents_24h": critical_in_24h,
+        }

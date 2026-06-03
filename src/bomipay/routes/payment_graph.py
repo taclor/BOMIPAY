@@ -37,6 +37,23 @@ async def transaction_graph(
     return graph
 
 
+@router.get("/payment-graph/customers/{customer_email:path}")
+async def customer_graph(
+    customer_email: str,
+    merchant_id: Optional[str] = None,
+    current_user=Depends(require_role(*ALLOWED_ROLES)),
+    db: AsyncSession = Depends(get_db),
+):
+    effective = str(merchant_id or current_user.merchant_id or "")
+    if not effective:
+        raise HTTPException(status_code=400, detail="merchant_id is required")
+    _check_merchant_access(current_user, effective)
+    graph = await PaymentGraphService.get_customer_graph(db, effective, customer_email)
+    if graph is None:
+        raise HTTPException(status_code=404, detail="No transactions found for customer")
+    return graph
+
+
 @router.get("/payment-graph/incidents/{incident_id}")
 async def incident_graph(
     incident_id: str,
@@ -62,3 +79,30 @@ async def merchant_graph_overview(
 ):
     _check_merchant_access(current_user, merchant_id_path)
     return await PaymentGraphService.get_merchant_overview(db, merchant_id_path)
+
+
+@router.get("/payment-graph/settlements/{settlement_id}")
+async def settlement_graph(
+    settlement_id: str,
+    merchant_id: Optional[str] = None,
+    current_user=Depends(require_role(*ALLOWED_ROLES)),
+    db: AsyncSession = Depends(get_db),
+):
+    effective = str(merchant_id or current_user.merchant_id or "")
+    if not effective:
+        raise HTTPException(status_code=400, detail="merchant_id is required")
+    _check_merchant_access(current_user, effective)
+    graph = await PaymentGraphService.get_settlement_graph(db, effective, settlement_id)
+    if graph is None:
+        raise HTTPException(status_code=404, detail="Settlement not found")
+    return graph
+
+
+@router.get("/payment-graph/merchants/{merchant_id_path}/network")
+async def merchant_network_graph(
+    merchant_id_path: str,
+    current_user=Depends(require_role(*ALLOWED_ROLES)),
+    db: AsyncSession = Depends(get_db),
+):
+    _check_merchant_access(current_user, merchant_id_path)
+    return await PaymentGraphService.get_merchant_network(db, merchant_id_path)

@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, JSON, String
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, JSON, String, Float
 
 from .base import TimestampMixin
 from ..db import Base, GUID
@@ -20,7 +20,14 @@ class ProviderSyncStatus(str, enum.Enum):
     running = "running"
     completed = "completed"
     failed = "failed"
+    failed_permanent = "failed_permanent"
     cancelled = "cancelled"
+
+
+class ErrorSeverity(str, enum.Enum):
+    retryable = "retryable"  # Transient error, can retry
+    permanent = "permanent"  # Auth/validation error, don't retry
+    unknown = "unknown"  # Unknown error, treat as retryable with caution
 
 
 class ProviderSyncJob(Base, TimestampMixin):
@@ -38,6 +45,16 @@ class ProviderSyncJob(Base, TimestampMixin):
     records_seen = Column(Integer, nullable=False, default=0)
     records_created = Column(Integer, nullable=False, default=0)
     records_updated = Column(Integer, nullable=False, default=0)
+    records_failed = Column(Integer, nullable=False, default=0)
     error_message = Column(String(1024), nullable=True)
+    error_severity = Column(String(32), nullable=True)  # retryable, permanent, unknown
     correlation_id = Column(String(255), nullable=False, index=True)
     raw_response_json = Column(JSON, nullable=True)
+    
+    # Retry & backoff fields
+    retry_count = Column(Integer, nullable=False, default=0)
+    max_retries = Column(Integer, nullable=False, default=3)
+    next_retry_at = Column(DateTime(timezone=True), nullable=True)
+    backoff_multiplier = Column(Float, nullable=False, default=1.0)
+    failure_details = Column(JSON, nullable=True)  # List of {"record_id": "...", "error": "...", "severity": "..."}
+

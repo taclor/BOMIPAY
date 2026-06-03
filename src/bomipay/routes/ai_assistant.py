@@ -28,6 +28,17 @@ def _check_merchant_access(current_user, merchant_id: str):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
 
+@router.get("/ai-assistant/health")
+async def ai_health():
+    categories = AIAssistantService.get_categories()
+    return {"status": "ok", "categories_supported": len(categories), "version": "1.0"}
+
+
+@router.get("/ai-assistant/categories")
+async def ai_categories():
+    return {"categories": AIAssistantService.get_categories()}
+
+
 @router.post("/ai-assistant/query")
 async def ai_query(
     payload: AIQueryRequest,

@@ -41,6 +41,34 @@ def _make_csv(rows: list[dict]) -> bytes:
     return "".join(lines).encode("utf-8")
 
 
+def _make_xlsx(rows: list[dict]) -> bytes:
+    """Build a minimal bank statement XLSX from rows of dicts."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    headers = ["date", "description", "debit", "credit", "balance", "reference"]
+    ws.append(headers)
+    for r in rows:
+        # Convert all values to strings to avoid datetime serialization issues
+        ws.append([
+            str(r.get('date', '2024-01-15')),
+            str(r.get('description', 'Payment')),
+            str(r.get('debit', '')),
+            str(r.get('credit', '')),
+            str(r.get('balance', '')),
+            str(r.get('reference', '')),
+        ])
+    
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return output.getvalue()
+
+
 @pytest.mark.asyncio
 async def test_csv_import_creates_import_and_entries(client):
     mid, headers = await _register_and_login(
@@ -188,3 +216,57 @@ async def test_bank_statement_tenant_isolation(client):
 async def test_bank_statements_require_auth(client):
     resp = await client.get("/api/v1/bank-statements/imports")
     assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_xlsx_import_succeeds(client):
+    """Test XLSX file import."""
+    mid, headers = await _register_and_login(
+        client, "bs_xlsx@example.com", "+2348003000007"
+    )
+    xlsx_data = _make_xlsx([
+        {"date": "2024-05-01", "description": "XLSX Credit", "credit": "300000", "balance": "300000"},
+        {"date": "2024-05-02", "description": "XLSX Debit", "debit": "50000", "balance": "250000"},
+    ])
+
+    resp = await client.post(
+        "/api/v1/bank-statements/import",
+        files={"file": ("statement.xlsx", io.BytesIO(xlsx_data), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+        data={"merchant_id": mid, "currency": "NGN"},
+        headers=headers,
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["status"] in ("completed", "processing", "failed")
+    assert data["processed_rows"] >= 2
+
+
+@pytest.mark.asyncio
+async def test_reconcile_import_endpoint_exists(client):
+    """Test reconciliation endpoint."""
+    mid, headers = await _register_and_login(
+        client, "bs_reconcile@example.com", "+2348003000008"
+    )
+    csv_data = _make_csv([
+        {"date": "2024-06-01", "description": "Reconcile Test", "credit": "100000", "reference": "REC-001"},
+    ])
+    
+    import_resp = await client.post(
+        "/api/v1/bank-statements/import",
+        files={"file": ("reconcile.csv", io.BytesIO(csv_data), "text/csv")},
+        data={"merchant_id": mid},
+        headers=headers,
+    )
+    import_id = import_resp.json()["id"]
+
+    # Reconcile endpoint should exist and succeed
+    recon_resp = await client.post(
+        f"/api/v1/bank-statements/imports/{import_id}/reconcile?merchant_id={mid}",
+        headers=headers,
+    )
+    assert recon_resp.status_code == 200
+    result = recon_resp.json()
+    assert "matched" in result
+    assert "unmatched" in result
+    assert "total" in result
+

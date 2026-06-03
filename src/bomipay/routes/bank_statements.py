@@ -63,9 +63,10 @@ async def import_bank_statement(
         import_record = await BankStatementService.process_csv_import(
             db, import_record, content, default_currency=currency
         )
-    else:
-        import_record.status = "failed"
-        import_record.error_summary = [{"error": "XLSX parsing not yet implemented"}]
+    elif file_ext == "xlsx":
+        import_record = await BankStatementService.process_xlsx_import(
+            db, import_record, content, default_currency=currency
+        )
 
     log_audit_event(
         db,
@@ -141,3 +142,42 @@ async def list_entries(
         db, effective, date_from=date_from, date_to=date_to, skip=skip, limit=limit
     )
     return [BankStatementEntryResponse.model_validate(e) for e in entries]
+
+
+@router.post("/bank-statements/imports/{import_id}/reconcile")
+async def reconcile_import(
+    import_id: str,
+    merchant_id: Optional[str] = None,
+    current_user=Depends(require_role(*ALLOWED_ROLES)),
+    db: AsyncSession = Depends(get_db),
+):
+    imp = await BankStatementService.get_import(db, import_id)
+    if not imp:
+        raise HTTPException(status_code=404, detail="Import not found")
+    
+    effective = str(merchant_id or current_user.merchant_id or "")
+    _check_merchant_access(current_user, effective)
+    
+    if str(imp.merchant_id) != str(effective):
+        raise HTTPException(status_code=403, detail="Merchant ID mismatch")
+    
+    try:
+        result = await BankStatementService.reconcile_import(db, import_id, effective)
+        
+        log_audit_event(
+            db,
+            event_type="bank_statement.reconciled",
+            actor_id=str(current_user.id),
+            actor_role=current_user.role.value,
+            event_payload={"import_id": import_id, "matched": result["matched"], "unmatched": result["unmatched"]},
+        )
+        
+        return {
+            "import_id": import_id,
+            "matched": result["matched"],
+            "unmatched": result["unmatched"],
+            "total": result["total"],
+        }
+    except Exception as e:
+        logger.error(f"Reconciliation error: {str(e)}", extra={"import_id": import_id})
+        raise HTTPException(status_code=500, detail="Reconciliation failed")

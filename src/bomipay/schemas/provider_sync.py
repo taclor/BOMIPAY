@@ -25,10 +25,20 @@ class ProviderSyncJobResponse(BaseModel):
     records_seen: int
     records_created: int
     records_updated: int
+    records_failed: int = 0
     error_message: Optional[str]
+    error_severity: Optional[str]
     correlation_id: str
     created_at: datetime
+    
+    # Retry & backoff information
+    retry_count: int = 0
+    max_retries: int = 3
+    next_retry_at: Optional[datetime] = None
+    backoff_multiplier: float = 1.0
+    failure_details: Optional[list] = None
 
     @field_serializer("id", "merchant_id", "provider_account_id")
     def serialize_uuid(self, value: UUID | str, _info) -> str:
         return str(value) if value else None
+

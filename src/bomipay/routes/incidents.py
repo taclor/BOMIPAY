@@ -11,6 +11,7 @@ from ..schemas.incident import (
     IncidentEventCreate,
     IncidentEventResponse,
     IncidentResponse,
+    IncidentStatsResponse,
     IncidentUpdate,
 )
 from ..services.audit import log_audit_event
@@ -28,11 +29,26 @@ def _check_merchant_access(current_user, merchant_id: str):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
 
 
+@router.get("/incidents/stats", response_model=IncidentStatsResponse)
+async def get_incident_stats(
+    merchant_id: Optional[str] = None,
+    current_user=Depends(require_role(*ALLOWED_ROLES)),
+    db: AsyncSession = Depends(get_db),
+):
+    effective = str(merchant_id or current_user.merchant_id or "")
+    if not effective:
+        raise HTTPException(status_code=400, detail="merchant_id is required")
+    _check_merchant_access(current_user, effective)
+    stats = await IncidentService.get_statistics(db, effective)
+    return IncidentStatsResponse(**stats)
+
+
 @router.get("/incidents", response_model=list[IncidentResponse])
 async def list_incidents(
     merchant_id: Optional[str] = None,
     status: Optional[str] = None,
     severity: Optional[str] = None,
+    incident_type: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
     current_user=Depends(require_role(*ALLOWED_ROLES)),
@@ -43,22 +59,9 @@ async def list_incidents(
         raise HTTPException(status_code=400, detail="merchant_id is required")
     _check_merchant_access(current_user, effective)
     incidents = await IncidentService.list_for_merchant(
-        db, effective, status=status, severity=severity, limit=limit, offset=offset
+        db, effective, status=status, severity=severity, incident_type=incident_type, limit=limit, offset=offset
     )
     return [IncidentResponse.model_validate(i) for i in incidents]
-
-
-@router.get("/incidents/{incident_id}", response_model=IncidentResponse)
-async def get_incident(
-    incident_id: str,
-    current_user=Depends(require_role(*ALLOWED_ROLES)),
-    db: AsyncSession = Depends(get_db),
-):
-    incident = await IncidentService.get_by_id(db, incident_id)
-    if not incident:
-        raise HTTPException(status_code=404, detail="Incident not found")
-    _check_merchant_access(current_user, str(incident.merchant_id))
-    return IncidentResponse.model_validate(incident)
 
 
 @router.post("/incidents", response_model=IncidentResponse, status_code=status.HTTP_201_CREATED)
@@ -91,6 +94,19 @@ async def create_incident(
         event_payload={"incident_id": str(incident.id)},
     )
     await db.commit()
+    return IncidentResponse.model_validate(incident)
+
+
+@router.get("/incidents/{incident_id}", response_model=IncidentResponse)
+async def get_incident(
+    incident_id: str,
+    current_user=Depends(require_role(*ALLOWED_ROLES)),
+    db: AsyncSession = Depends(get_db),
+):
+    incident = await IncidentService.get_by_id(db, incident_id)
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    _check_merchant_access(current_user, str(incident.merchant_id))
     return IncidentResponse.model_validate(incident)
 
 

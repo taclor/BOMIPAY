@@ -1,0 +1,47 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.11.7, pytest-9.0.3, pluggy-1.6.0
+rootdir: D:\DEV_CONTAINERS\BOMIPAY
+configfile: pytest.ini
+plugins: anyio-3.7.1, asyncio-1.4.0, cov-7.0.0, typeguard-4.4.4
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 1 item
+
+tests\test_bank_statements.py F                                          [100%]
+
+================================== FAILURES ===================================
+____________________ test_reconcile_import_endpoint_exists ____________________
+tests\test_bank_statements.py:267: in test_reconcile_import_endpoint_exists
+    assert recon_resp.status_code == 200
+E   assert 500 == 200
+E    +  where 500 = <Response [500 Internal Server Error]>.status_code
+---------------------------- Captured stderr call -----------------------------
+{"asctime": "2026-06-03 12:00:40,525", "levelname": "INFO", "name": "bomipay", "message": "request.received", "path": "/api/v1/auth/register", "method": "POST", "request_id": "043c89ce-eb8f-4013-9148-65970ed5707b"}
+{"asctime": "2026-06-03 12:00:40,527", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://testserver/api/v1/auth/register \"HTTP/1.1 201 Created\""}
+{"asctime": "2026-06-03 12:00:40,903", "levelname": "INFO", "name": "bomipay", "message": "request.received", "path": "/api/v1/auth/login", "method": "POST", "request_id": "53a3f4a9-1552-473c-abe7-2c3ceb2334a7"}
+{"asctime": "2026-06-03 12:00:40,904", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://testserver/api/v1/auth/login \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-06-03 12:00:40,930", "levelname": "INFO", "name": "bomipay", "message": "bank_statement.processed", "import_id": "cbcbc883-dab5-4ec2-8bb0-20e7d0be55fd", "total": 1, "processed": 1, "failed": 0}
+{"asctime": "2026-06-03 12:00:41,023", "levelname": "INFO", "name": "bomipay", "message": "request.received", "path": "/api/v1/bank-statements/import", "method": "POST", "request_id": "c9847719-f3c1-4e1a-80ef-bcccaee2d3a7"}
+{"asctime": "2026-06-03 12:00:41,024", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://testserver/api/v1/bank-statements/import \"HTTP/1.1 201 Created\""}
+{"asctime": "2026-06-03 12:00:41,159", "levelname": "ERROR", "name": "bomipay", "message": "Reconciliation error: Can't operate on closed transaction inside context manager.  Please complete the context manager before emitting further commands.", "import_id": "cbcbc883-dab5-4ec2-8bb0-20e7d0be55fd"}
+{"asctime": "2026-06-03 12:00:41,159", "levelname": "INFO", "name": "bomipay", "message": "request.received", "path": "/api/v1/bank-statements/imports/cbcbc883-dab5-4ec2-8bb0-20e7d0be55fd/reconcile", "method": "POST", "request_id": "95bfa3ab-08b7-4692-8c25-251ef9ff92ed"}
+{"asctime": "2026-06-03 12:00:41,160", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://testserver/api/v1/bank-statements/imports/cbcbc883-dab5-4ec2-8bb0-20e7d0be55fd/reconcile?merchant_id=a55f01ed-c7ee-4abf-ba99-dc40c9eca3ea \"HTTP/1.1 500 Internal Server Error\""}
+------------------------------ Captured log call ------------------------------
+INFO     bomipay:main.py:84 request.received
+INFO     httpx:_client.py:1740 HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 201 Created"
+INFO     bomipay:main.py:84 request.received
+INFO     httpx:_client.py:1740 HTTP Request: POST http://testserver/api/v1/auth/login "HTTP/1.1 200 OK"
+INFO     bomipay:bank_statement.py:250 bank_statement.processed
+INFO     bomipay:main.py:84 request.received
+INFO     httpx:_client.py:1740 HTTP Request: POST http://testserver/api/v1/bank-statements/import "HTTP/1.1 201 Created"
+ERROR    bomipay:bank_statements.py:184 Reconciliation error: Can't operate on closed transaction inside context manager.  Please complete the context manager before emitting further commands.
+INFO     bomipay:main.py:84 request.received
+INFO     httpx:_client.py:1740 HTTP Request: POST http://testserver/api/v1/bank-statements/imports/cbcbc883-dab5-4ec2-8bb0-20e7d0be55fd/reconcile?merchant_id=a55f01ed-c7ee-4abf-ba99-dc40c9eca3ea "HTTP/1.1 500 Internal Server Error"
+============================== warnings summary ===============================
+C:\Users\ernes\AppData\Roaming\Python\Python311\site-packages\pythonjsonlogger\jsonlogger.py:11
+  C:\Users\ernes\AppData\Roaming\Python\Python311\site-packages\pythonjsonlogger\jsonlogger.py:11: DeprecationWarning: pythonjsonlogger.jsonlogger has been moved to pythonjsonlogger.json
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_bank_statements.py::test_reconcile_import_endpoint_exists
+======================== 1 failed, 1 warning in 8.05s =========================

@@ -12,6 +12,8 @@ from ..schemas.auth import (
     UserRegisterRequest,
     UserResponse,
 )
+from jose import JWTError
+
 from ..services.auth import authenticate_user, decode_token, get_current_active_user
 from ..services.audit import log_audit_event
 from ..services.security import create_access_token, create_refresh_token
@@ -89,7 +91,10 @@ async def refresh_token(
     payload: RefreshTokenRequest,
     db: AsyncSession = Depends(get_db),
 ) -> TokenResponse:
-    payload_data = decode_token(payload.refresh_token)
+    try:
+        payload_data = decode_token(payload.refresh_token)
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
     if payload_data.get("type") != "refresh":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
     user_id = payload_data.get("sub")
