@@ -1,4 +1,5 @@
 import os
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +11,9 @@ from ..services.transaction import TransactionService
 from ..services.merchant import ProviderAccountService
 from ..services.encryption import decrypt_secret
 from ..services.data_source import DataSourceService
+from ..services.task_enqueue import TaskEnqueueService
+
+logger = logging.getLogger("bomipay")
 
 router = APIRouter()
 
@@ -75,4 +79,8 @@ async def provider_webhook(
         merchant_id=merchant_id,
     )
     await db.commit()
+    
+    # Enqueue post-processing task for webhook enrichment and incident detection
+    TaskEnqueueService.enqueue_webhook_post_process(provider_event_id)
+    
     return {"success": True}

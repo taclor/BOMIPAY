@@ -28,5 +28,32 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     ports:
       - "6379:6379"
+  worker:
+    build: .
+    command: celery -A src.bomipay.worker app worker --loglevel=info --concurrency=4
+    env_file:
+      - .env
+    environment:
+      - BOMIPAY_ENV=development
+      - DATABASE_URL=postgresql://bomipay:changeme@db:5432/bomipay
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+  beat:
+    build: .
+    command: celery -A src.bomipay.worker app beat --loglevel=info
+    env_file:
+      - .env
+    environment:
+      - BOMIPAY_ENV=development
+      - DATABASE_URL=postgresql://bomipay:changeme@db:5432/bomipay
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+      - worker
+    restart: unless-stopped
 volumes:
   bomipay_data:

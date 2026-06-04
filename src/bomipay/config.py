@@ -21,6 +21,10 @@ class AppSettings(BaseSettings):
     rate_limit_enabled: bool = Field(True, alias="RATE_LIMIT_ENABLED")
     docs_enabled: bool = Field(True, alias="DOCS_ENABLED")
     max_upload_size_bytes: int = Field(10 * 1024 * 1024, alias="MAX_UPLOAD_SIZE_BYTES")
+    # Production hardening
+    hsts_max_age: int = Field(31536000, alias="HSTS_MAX_AGE")  # 1 year
+    csp_enabled: bool = Field(True, alias="CSP_ENABLED")
+    request_logging_enabled: bool = Field(True, alias="REQUEST_LOGGING_ENABLED")
 
     @property
     def cors_allowed_origins_list(self) -> list[str]:

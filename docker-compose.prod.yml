@@ -25,18 +25,39 @@ services:
 
   worker:
     build: .
-    command: celery -A bomipay.worker worker --loglevel=info
+    command: celery -A src.bomipay.worker app worker --loglevel=info --concurrency=4
     restart: always
     env_file:
       - .env.prod
     environment:
       - PYTHONUNBUFFERED=1
       - BOMIPAY_ENV=production
+      - DATABASE_URL=postgresql://bomipay:${POSTGRES_PASSWORD:-changeme}@db:5432/bomipay
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  beat:
+    build: .
+    command: celery -A src.bomipay.worker app beat --loglevel=info
+    restart: always
+    env_file:
+      - .env.prod
+    environment:
+      - PYTHONUNBUFFERED=1
+      - BOMIPAY_ENV=production
+      - DATABASE_URL=postgresql://bomipay:${POSTGRES_PASSWORD:-changeme}@db:5432/bomipay
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_started
 
   db:
     image: postgres:16-alpine

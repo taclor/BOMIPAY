@@ -3,7 +3,13 @@ from __future__ import annotations
 
 import pytest
 
-from bomipay.utils.secrets import mask_dict, mask_account_number, SENSITIVE_KEYS
+from bomipay.utils.secrets import (
+    mask_dict, 
+    mask_account_number, 
+    mask_email,
+    mask_bearer_token,
+    SENSITIVE_KEYS
+)
 
 
 # ---------------------------------------------------------------------------
@@ -131,6 +137,53 @@ def test_mask_account_number_format():
     assert result.startswith("****")
     assert result.endswith("3210")
     assert len(result) == 8
+
+
+# ---------------------------------------------------------------------------
+# mask_email
+# ---------------------------------------------------------------------------
+
+
+def test_mask_email_standard():
+    result = mask_email("user@example.com")
+    assert result.startswith("u***@")
+    assert "***" in result
+
+
+def test_mask_email_no_domain():
+    result = mask_email("invalid.email")
+    assert result == "invalid.email"
+
+
+def test_mask_email_empty():
+    assert mask_email("") == ""
+
+
+def test_mask_email_preserves_structure():
+    result = mask_email("alice.smith@company.co.uk")
+    assert "@" in result
+    assert result.count("@") == 1
+
+
+# ---------------------------------------------------------------------------
+# mask_bearer_token
+# ---------------------------------------------------------------------------
+
+
+def test_mask_bearer_token_long():
+    long_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ"
+    result = mask_bearer_token(long_token)
+    assert result.startswith("eyJhbGciOi")
+    assert result.endswith("***")
+    assert len(result) == 13  # 10 chars + "***"
+
+
+def test_mask_bearer_token_short():
+    assert mask_bearer_token("short") == "***"
+
+
+def test_mask_bearer_token_empty():
+    assert mask_bearer_token("") == "***"
 
 
 # ---------------------------------------------------------------------------

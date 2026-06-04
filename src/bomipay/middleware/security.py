@@ -14,22 +14,27 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-_SECURITY_HEADERS: dict[str, str] = {
-    "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
-    "X-XSS-Protection": "1; mode=block",
-    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-}
+from ..config import settings
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Injects standard security headers into every HTTP response."""
 
+    def _get_security_headers(self) -> dict[str, str]:
+        """Build security headers dict using configured values."""
+        return {
+            "X-Content-Type-Options": "nosniff",
+            "X-Frame-Options": "DENY",
+            "X-XSS-Protection": "1; mode=block",
+            "Strict-Transport-Security": f"max-age={settings.hsts_max_age}; includeSubDomains",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+            "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+        }
+
     async def dispatch(self, request: Request, call_next) -> Response:
         response = await call_next(request)
-        for header, value in _SECURITY_HEADERS.items():
+        headers = self._get_security_headers()
+        for header, value in headers.items():
             response.headers.setdefault(header, value)
         return response
 

@@ -28,9 +28,13 @@ from .bank_statement import (
     BankStatementReconciliationStatus,
 )
 from .provider_sync_job import ProviderSyncJob, ProviderSyncStatus, ProviderSyncType
+from .provider_sync_checkpoint import ProviderSyncCheckpoint
 from .incident import Incident, IncidentEvent, IncidentSeverity, IncidentStatus, IncidentType
 from .money_at_risk import MoneyAtRisk, MoneyAtRiskStatus
 from .dashboard import DashboardSnapshot, DashboardSnapshotStatus
+from .event import DomainEvent, EventType
+from .ledger import LedgerAccount, JournalEntry, LedgerLine, FeeRecord
+from .provider_health import ProviderHealthMetrics, HealthStatus
 
 __all__ = [
     "TimestampMixin",
@@ -70,6 +74,7 @@ __all__ = [
     "ProviderSyncJob",
     "ProviderSyncStatus",
     "ProviderSyncType",
+    "ProviderSyncCheckpoint",
     "Incident",
     "IncidentEvent",
     "IncidentSeverity",
@@ -79,4 +84,12 @@ __all__ = [
     "MoneyAtRiskStatus",
     "DashboardSnapshot",
     "DashboardSnapshotStatus",
+    "DomainEvent",
+    "EventType",
+    "LedgerAccount",
+    "JournalEntry",
+    "LedgerLine",
+    "FeeRecord",
+    "ProviderHealthMetrics",
+    "HealthStatus",
 ]
