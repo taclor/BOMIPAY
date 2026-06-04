@@ -1,21 +1,26 @@
-version: "3.9"
 services:
   api:
     build: .
     env_file:
       - .env
     ports:
-      - "8080:8080"
+      - "8082:8080"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://bomipay:changeme@db:5432/bomipay
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db
       - redis
     restart: unless-stopped
+
   db:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: bomipay
       POSTGRES_USER: bomipay
       POSTGRES_PASSWORD: changeme
+    ports:
+      - "5433:5432"
     volumes:
       - bomipay_data:/var/lib/postgresql/data
     healthcheck:
@@ -23,37 +28,41 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
   redis:
     image: redis:8-alpine
     command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "6379:6379"
+      - "6380:6379"
+
   worker:
     build: .
-    command: celery -A src.bomipay.worker app worker --loglevel=info --concurrency=4
+    command: celery -A src.bomipay.worker worker --loglevel=info --concurrency=4
     env_file:
       - .env
     environment:
       - BOMIPAY_ENV=development
-      - DATABASE_URL=postgresql://bomipay:changeme@db:5432/bomipay
+      - DATABASE_URL=postgresql+asyncpg://bomipay:changeme@db:5432/bomipay
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db
       - redis
     restart: unless-stopped
+
   beat:
     build: .
-    command: celery -A src.bomipay.worker app beat --loglevel=info
+    command: celery -A src.bomipay.worker beat --loglevel=info
     env_file:
       - .env
     environment:
       - BOMIPAY_ENV=development
-      - DATABASE_URL=postgresql://bomipay:changeme@db:5432/bomipay
+      - DATABASE_URL=postgresql+asyncpg://bomipay:changeme@db:5432/bomipay
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db
       - redis
       - worker
     restart: unless-stopped
+
 volumes:
   bomipay_data:

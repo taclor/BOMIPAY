@@ -3,6 +3,7 @@ import os
 import sys
 from logging.config import fileConfig
 
+import sqlalchemy as sa
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
@@ -32,7 +33,13 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        compare_type=True,
+        version_num_type=sa.String(256),
+        transaction_per_migration=True,
+    )
 
     with context.begin_transaction():
         context.run_migrations()
