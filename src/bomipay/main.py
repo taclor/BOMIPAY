@@ -35,6 +35,7 @@ from .routes.payment_graph import router as payment_graph_router
 from .routes.ai_assistant import router as ai_assistant_router
 from .routes.ledger import router as ledger_router
 from .routes.provider_health import router as provider_health_router
+from .routes.admin_operations import router as admin_operations_router
 
 configure_logging()
 logger = logging.getLogger("bomipay")
@@ -110,6 +111,7 @@ app.include_router(payment_graph_router, prefix="/api/v1")
 app.include_router(ai_assistant_router, prefix="/api/v1")
 app.include_router(ledger_router, prefix="/api/v1")
 app.include_router(provider_health_router, prefix="/api/v1")
+app.include_router(admin_operations_router, prefix="/api/v1")
 app.include_router(webhooks_router)
 
 

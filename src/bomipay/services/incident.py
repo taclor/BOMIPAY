@@ -4,6 +4,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 from sqlalchemy import select, func, and_
+from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.incident import Incident, IncidentEvent, IncidentStatus, IncidentSeverity
@@ -49,9 +50,12 @@ class IncidentService:
         return incident
 
     @staticmethod
-    async def get_by_id(db: AsyncSession, incident_id: str) -> Optional[Incident]:
-        result = await db.execute(select(Incident).where(Incident.id == incident_id))
-        return result.scalar_one_or_none()
+    async def get_by_id(db: AsyncSession, incident_id: str, include_events: bool = True) -> Optional[Incident]:
+        stmt = select(Incident).where(Incident.id == incident_id)
+        if include_events:
+            stmt = stmt.options(joinedload(Incident.incident_events))
+        result = await db.execute(stmt)
+        return result.unique().scalar_one_or_none()
 
     @staticmethod
     async def list_for_merchant(
@@ -62,7 +66,14 @@ class IncidentService:
         incident_type: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        include_events: bool = False,
     ) -> list[Incident]:
+        """List incidents for a merchant with optional eager loading.
+        
+        Note: If include_events=True, use pagination carefully as eager loading
+        can cause cartesian product explosion. Default is False to avoid N+1 in
+        favor of lazy loading events only when needed.
+        """
         stmt = select(Incident).where(Incident.merchant_id == merchant_id)
         if status:
             stmt = stmt.where(Incident.status == status)
@@ -70,9 +81,11 @@ class IncidentService:
             stmt = stmt.where(Incident.severity == severity)
         if incident_type:
             stmt = stmt.where(Incident.incident_type == incident_type)
+        if include_events:
+            stmt = stmt.options(joinedload(Incident.incident_events))
         stmt = stmt.order_by(Incident.created_at.desc()).offset(offset).limit(limit)
         result = await db.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     @staticmethod
     async def acknowledge(

@@ -35,6 +35,8 @@ from .dashboard import DashboardSnapshot, DashboardSnapshotStatus
 from .event import DomainEvent, EventType
 from .ledger import LedgerAccount, JournalEntry, LedgerLine, FeeRecord
 from .provider_health import ProviderHealthMetrics, HealthStatus
+from .ai_prompt_version import AIPromptVersion, AIResponseLog
+from .ai_token_usage import AITokenUsage
 
 __all__ = [
     "TimestampMixin",
@@ -92,4 +94,7 @@ __all__ = [
     "FeeRecord",
     "ProviderHealthMetrics",
     "HealthStatus",
+    "AIPromptVersion",
+    "AIResponseLog",
+    "AITokenUsage",
 ]

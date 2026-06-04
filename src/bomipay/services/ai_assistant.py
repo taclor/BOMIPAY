@@ -25,6 +25,11 @@ from ..models.provider_account import ProviderAccount
 from ..models.provider_sync_job import ProviderSyncJob
 from ..models.reconciliation import ReconciliationResult, Settlement
 from ..models.transaction import Transaction, TransactionStatus
+from ..models.ai_prompt_version import AIResponseLog
+from ..models.ai_token_usage import AITokenUsage
+from .ai_safety import AISafetyChecker
+from .ai_observability import AITokenCounter, AITokenAnalytics
+from .ai_versioning import AIPromptVersionManager
 
 logger = logging.getLogger("bomipay")
 
@@ -592,3 +597,164 @@ class AIAssistantService:
             }
             for name, keywords in _QUERY_KEYWORDS.items()
         ]
+
+    @staticmethod
+    async def query_with_safety(
+        db: AsyncSession,
+        merchant_id: str,
+        query: str,
+        max_tokens: int = 500,
+        transaction_id: Optional[str] = None,
+        settlement_id: Optional[str] = None,
+    ) -> dict:
+        """
+        Execute AI query with full safety checks, logging, and observability.
+
+        Flow:
+        1. Get retrieval context (from DB)
+        2. Check safety flags
+        3. Build prompt with version
+        4. Call query handler (simulates LLM)
+        5. Check for hallucinations
+        6. Log response + usage
+        7. Return result
+
+        Args:
+            db: Database session
+            merchant_id: Merchant ID
+            query: User query
+            max_tokens: Maximum tokens for response
+            transaction_id: Optional transaction context
+            settlement_id: Optional settlement context
+
+        Returns:
+            {
+                "response": "...",
+                "confidence_score_bps": 8500,
+                "sources": ["incident_123", "txn_456", ...],
+                "token_usage": {"query": 50, "response": 100},
+                "caveats": [str],
+                "is_safe": bool,
+                "has_hallucinations": bool,
+            }
+        """
+        # Step 1: Get current prompt version
+        prompt_version = await AIPromptVersionManager.get_current_version(db)
+        logger.info(
+            "ai_assistant.query_with_safety.start",
+            extra={"merchant_id": merchant_id, "query": query, "version": prompt_version.version}
+        )
+
+        # Step 2: Get the query result (using existing logic)
+        base_result = await AIAssistantService.query(
+            db,
+            merchant_id=merchant_id,
+            query=query,
+            transaction_id=transaction_id,
+            settlement_id=settlement_id,
+        )
+
+        response_text = base_result.get("answer", "")
+        confidence_bps = base_result.get("confidence_score_bps", 5000)
+        cited_records = base_result.get("cited_records", [])
+        context_used = base_result.get("context_used", {})
+
+        # Prepare context for safety checks
+        context_for_safety = {
+            **context_used,
+            "cited_records": cited_records,
+            "data_points": sum([
+                1 if v else 0
+                for v in context_used.values()
+                if v not in (0, None, [], {})
+            ]),
+        }
+
+        # Step 3: Check for hallucinations
+        safety_result = await AISafetyChecker.check_response_safety(
+            query=query,
+            response=response_text,
+            context=context_for_safety,
+        )
+
+        has_hallucinations = safety_result.get("hallucinations_check", {}).get("has_hallucinations", False)
+        overall_confidence = safety_result.get("overall_confidence", 50)
+
+        # Adjust confidence if safety check detected issues
+        if not safety_result.get("safe", False):
+            confidence_bps = min(confidence_bps, int(overall_confidence * 100))
+
+        # Step 4: Estimate token usage
+        context_summary = f"Data sources: {', '.join(str(k) for k in context_used.keys() if context_used.get(k))}"
+        query_tokens = AITokenCounter.estimate_context_tokens({
+            "query": query,
+            "context": context_summary,
+        })
+        response_tokens = AITokenCounter.estimate_response_tokens(response_text)
+
+        # Step 5: Log response
+        log_record = AIResponseLog(
+            merchant_id=merchant_id,
+            prompt_version=prompt_version.version,
+            model_name=prompt_version.model_name,
+            query=query,
+            context_sources=context_for_safety,
+            response_text=response_text,
+            confidence_score=confidence_bps,
+            has_hallucinations=1 if has_hallucinations else 0,
+            cited_record_ids=cited_records,
+            retrieval_query=f"Query for: {query[:100]}",  # Simplified
+            response_metadata={
+                "query_category": base_result.get("query_category", "general"),
+                "safety_check": safety_result,
+            },
+        )
+        db.add(log_record)
+        await db.flush()
+
+        # Step 6: Log token usage
+        token_usage = await AITokenCounter.log_token_usage(
+            db=db,
+            merchant_id=merchant_id,
+            ai_response_log_id=str(log_record.id),
+            query_tokens=query_tokens,
+            response_tokens=response_tokens,
+            model_name=prompt_version.model_name,
+        )
+
+        # Prepare final response
+        caveats = []
+        if safety_result.get("warnings"):
+            caveats.extend(safety_result["warnings"])
+        if not safety_result.get("safe", False):
+            caveats.append("Response has moderate confidence — verify critical claims before acting")
+
+        # Extract cited IDs
+        cited_ids = [rec.get("id") for rec in cited_records]
+
+        logger.info(
+            "ai_assistant.query_with_safety.complete",
+            extra={
+                "merchant_id": merchant_id,
+                "confidence_bps": confidence_bps,
+                "has_hallucinations": has_hallucinations,
+                "total_tokens": token_usage.total_tokens,
+                "cost_cents": token_usage.cost_cents,
+            }
+        )
+
+        return {
+            "response": response_text,
+            "confidence_score_bps": confidence_bps,
+            "sources": cited_ids,
+            "token_usage": {
+                "query": query_tokens,
+                "response": response_tokens,
+                "total": token_usage.total_tokens,
+                "cost_cents": token_usage.cost_cents,
+            },
+            "caveats": caveats,
+            "is_safe": safety_result.get("safe", False),
+            "has_hallucinations": has_hallucinations,
+            "response_log_id": str(log_record.id),
+        }
