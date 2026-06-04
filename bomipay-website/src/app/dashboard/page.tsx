@@ -1,0 +1,109 @@
+'use client'
+
+import Shell from '@/components/layout/Shell'
+import MetricCard from '@/components/dashboard/MetricCard'
+import ProviderHealthCard from '@/components/dashboard/ProviderHealthCard'
+import ActivityFeed from '@/components/dashboard/ActivityFeed'
+import AIInsightPanel from '@/components/dashboard/AIInsightPanel'
+import {
+  useDashboardSummary,
+  useDashboardMetrics,
+  useDashboardProviders,
+  useDashboardActivities,
+  useAISummary,
+} from '@/hooks/useDashboard'
+import { bpsToPercent, formatNGN } from '@/lib/utils'
+import { useQueryClient } from '@tanstack/react-query'
+import { AlertTriangle, TrendingDown, ShieldAlert, Clock, AlertCircle } from 'lucide-react'
+
+export default function DashboardPage() {
+  const qc = useQueryClient()
+  const { data: summary } = useDashboardSummary()
+  const { data: metrics } = useDashboardMetrics()
+  const { data: providers } = useDashboardProviders()
+  const { data: activities } = useDashboardActivities()
+  const { data: aiSummary } = useAISummary()
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ['dashboard'] })
+    qc.invalidateQueries({ queryKey: ['ai', 'summary'] })
+  }
+
+  return (
+    <Shell title="Mission Control" subtitle="LIVE" onRefresh={refresh}>
+      {/* KPI Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-6">
+        <MetricCard
+          title="Success Rate"
+          value={summary ? bpsToPercent(summary.payment_success_rate) : '—'}
+          subtitle={`${summary?.total_transactions_24h.toLocaleString() ?? '—'} txns / 24h`}
+          trend={metrics?.success_rate_trend}
+          trendColor="#10b981"
+          status="ok"
+          icon={<AlertCircle className="w-3.5 h-3.5" />}
+        />
+        <MetricCard
+          title="Failed Transactions"
+          value={summary?.failed_transactions_count.toString() ?? '—'}
+          subtitle="Last 24 hours"
+          trend={metrics?.failed_trend}
+          trendColor="#ef4444"
+          status={summary && summary.failed_transactions_count > 50 ? 'critical' : summary && summary.failed_transactions_count > 20 ? 'warning' : 'ok'}
+          icon={<TrendingDown className="w-3.5 h-3.5" />}
+        />
+        <MetricCard
+          title="Money at Risk"
+          value={summary ? formatNGN(summary.money_at_risk_amount) : '—'}
+          status={summary?.money_at_risk_status ?? 'info'}
+          icon={<ShieldAlert className="w-3.5 h-3.5" />}
+          badge={summary ? (
+            <span className={`text-[10px] px-1.5 py-0.5 rounded border font-mono uppercase tracking-wider ${
+              summary.money_at_risk_status === 'critical' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
+              summary.money_at_risk_status === 'warning' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30' :
+              'bg-green-500/10 text-green-400 border-green-500/30'
+            }`}>{summary.money_at_risk_status}</span>
+          ) : undefined}
+        />
+        <MetricCard
+          title="Pending Settlements"
+          value={summary?.pending_settlements_count.toString() ?? '—'}
+          subtitle={summary ? formatNGN(summary.pending_settlements_amount) : '—'}
+          status="info"
+          icon={<Clock className="w-3.5 h-3.5" />}
+        />
+        <MetricCard
+          title="Open Incidents"
+          value={summary?.open_incidents_count.toString() ?? '—'}
+          status={summary && summary.open_incidents_count > 5 ? 'critical' : summary && summary.open_incidents_count > 0 ? 'warning' : 'ok'}
+          icon={<AlertTriangle className="w-3.5 h-3.5" />}
+        />
+      </div>
+
+      {/* Provider Health */}
+      <div className="mb-6">
+        <h2 className="text-[10px] text-gray-500 uppercase tracking-wider mb-3 font-medium">Provider Health</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {(providers ?? []).map((provider) => (
+            <ProviderHealthCard key={provider.name} provider={provider} />
+          ))}
+        </div>
+      </div>
+
+      {/* Activity + AI */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-[#111827] border border-[#1f2937] rounded p-4">
+          <h2 className="text-[10px] text-gray-500 uppercase tracking-wider mb-3 font-medium">Recent Activity</h2>
+          <ActivityFeed activities={activities ?? []} />
+        </div>
+
+        <div className="bg-[#111827] border border-[#1f2937] rounded p-4">
+          <h2 className="text-[10px] text-gray-500 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+            AI Operational Insight
+          </h2>
+          {aiSummary && <AIInsightPanel summary={aiSummary} />}
+        </div>
+      </div>
+    </Shell>
+  )
+}
