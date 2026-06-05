@@ -54,7 +54,7 @@ class CacheLayer:
     async def close(cls) -> None:
         """Close Redis connection."""
         if cls._redis_client:
-            await cls._redis_client.close()
+            await cls._redis_client.aclose()
             cls._redis_client = None
             logger.info("Cache layer closed")
     

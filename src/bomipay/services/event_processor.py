@@ -185,7 +185,7 @@ class EventProcessor:
         redis = Redis.from_url(settings.redis_url, decode_responses=True)
         try:
             pending = redis.xpending(stream_name, consumer_group)
-            return pending
+            return {"stream": stream_name, **pending}
         finally:
             redis.close()
 
@@ -197,6 +197,7 @@ class EventProcessor:
     ):
         """
         Reset consumer group to replay from beginning (for recovery).
+        Creates the group if it does not already exist.
 
         Args:
             stream_name: Name of Redis Stream
@@ -205,8 +206,16 @@ class EventProcessor:
         """
         redis = Redis.from_url(settings.redis_url, decode_responses=True)
         try:
-            redis.xgroup_setid(stream_name, consumer_group, start_id)
-            logger.info(f"Reset consumer group {consumer_group} to {start_id}")
+            try:
+                redis.xgroup_create(stream_name, consumer_group, id=start_id, mkstream=True)
+                logger.info(f"Created consumer group {consumer_group} at {start_id}")
+            except Exception as e:
+                if "BUSYGROUP" in str(e):
+                    # Group exists — just reposition it
+                    redis.xgroup_setid(stream_name, consumer_group, start_id)
+                    logger.info(f"Reset consumer group {consumer_group} to {start_id}")
+                else:
+                    raise
         finally:
             redis.close()
 

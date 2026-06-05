@@ -6,7 +6,7 @@ interface AuthState {
   token: string | null
   user: User | null
   isAuthenticated: boolean
-  setAuth: (token: string, user: User) => void
+  setAuth: (token: string, user: User | null) => void
   clearAuth: () => void
 }
 
@@ -17,7 +17,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       setAuth: (token, user) => {
-        set({ token, user, isAuthenticated: true })
+        set({ token, user: user ?? null, isAuthenticated: true })
         if (typeof window !== 'undefined') {
           localStorage.setItem('token', token)
         }

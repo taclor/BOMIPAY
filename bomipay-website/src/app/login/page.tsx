@@ -22,7 +22,7 @@ export default function LoginPage() {
 
     try {
       const data = await login({ email, password })
-      setAuth(data.access_token, data.user)
+      setAuth(data.access_token, data.user ?? null)
       router.push('/dashboard')
     } catch {
       setError('Invalid credentials. Check email and password.')

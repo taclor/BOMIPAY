@@ -9,6 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from alembic import context
 
+# Provide a placeholder SECRET_KEY so pydantic-settings validation passes
+# during migrations. The real key is only needed at runtime, not for migrations.
+os.environ.setdefault("SECRET_KEY", "alembic-migration-placeholder-key-not-used")
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.bomipay.db import Base  # noqa: E402
 

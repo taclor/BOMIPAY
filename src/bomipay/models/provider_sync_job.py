@@ -48,7 +48,7 @@ class ProviderSyncJob(Base, TimestampMixin):
     records_failed = Column(Integer, nullable=False, default=0)
     error_message = Column(String(1024), nullable=True)
     error_severity = Column(String(32), nullable=True)  # retryable, permanent, unknown
-    correlation_id = Column(String(255), nullable=False, index=True)
+    correlation_id = Column(String(255), nullable=False, index=True, default=lambda: str(uuid.uuid4()))
     raw_response_json = Column(JSON, nullable=True)
     
     # Retry & backoff fields

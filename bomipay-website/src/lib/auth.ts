@@ -5,7 +5,9 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
   const { data } = await api.post<LoginResponse>('/auth/login', credentials)
   if (typeof window !== 'undefined') {
     localStorage.setItem('token', data.access_token)
-    localStorage.setItem('user', JSON.stringify(data.user))
+    if (data.user) {
+      localStorage.setItem('user', JSON.stringify(data.user))
+    }
   }
   return data
 }

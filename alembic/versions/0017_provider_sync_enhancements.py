@@ -48,7 +48,8 @@ def upgrade() -> None:
         ["next_retry_at"],
     )
     
-    # Add index on status for finding jobs by status
+    # Replace the old composite index (merchant_id, status) with a simpler status-only index
+    op.drop_index("ix_provider_sync_jobs_status", table_name="provider_sync_jobs")
     op.create_index(
         "ix_provider_sync_jobs_status",
         "provider_sync_jobs",
@@ -58,6 +59,8 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_index("ix_provider_sync_jobs_status", table_name="provider_sync_jobs")
+    # Restore original composite index from migration 0012
+    op.create_index("ix_provider_sync_jobs_status", "provider_sync_jobs", ["merchant_id", "status"], unique=False)
     op.drop_index("ix_provider_sync_jobs_next_retry_at", table_name="provider_sync_jobs")
     op.drop_column("provider_sync_jobs", "failure_details")
     op.drop_column("provider_sync_jobs", "backoff_multiplier")

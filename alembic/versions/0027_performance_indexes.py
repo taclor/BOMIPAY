@@ -18,14 +18,6 @@ depends_on = None
 
 def upgrade() -> None:
     # Transactions table indexes
-    # Timeline query optimization: get transactions for merchant ordered by date
-    op.create_index(
-        "ix_transactions_merchant_created",
-        "transactions",
-        ["merchant_id", sa.desc("created_at")],
-        unique=False,
-    )
-    
     # Failed payment list: filter by merchant and status
     op.create_index(
         "ix_transactions_merchant_status_created",
@@ -93,40 +85,6 @@ def upgrade() -> None:
         unique=False,
     )
 
-    # Audit logs indexes
-    # Get audit logs by action
-    op.create_index(
-        "ix_audit_logs_merchant_action_created",
-        "audit_logs",
-        ["merchant_id", "action", sa.desc("created_at")],
-        unique=False,
-    )
-    
-    # Find changes to specific resource
-    op.create_index(
-        "ix_audit_logs_resource_created",
-        "audit_logs",
-        ["resource_type", "resource_id", sa.desc("created_at")],
-        unique=False,
-    )
-
-    # AI/Observability tables indexes for merchant timeline queries
-    # AI response logs
-    op.create_index(
-        "ix_ai_response_logs_merchant_created",
-        "ai_response_logs",
-        ["merchant_id", sa.desc("created_at")],
-        unique=False,
-    )
-    
-    # AI token usage
-    op.create_index(
-        "ix_ai_token_usage_merchant_created",
-        "ai_token_usage",
-        ["merchant_id", sa.desc("created_at")],
-        unique=False,
-    )
-    
     # Provider health metrics
     op.create_index(
         "ix_provider_health_metrics_merchant_created",
@@ -137,13 +95,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Drop all indexes in reverse order
+    # Drop all indexes created by this migration in reverse order
     op.drop_index("ix_provider_health_metrics_merchant_created", table_name="provider_health_metrics")
-    op.drop_index("ix_ai_token_usage_merchant_created", table_name="ai_token_usage")
-    op.drop_index("ix_ai_response_logs_merchant_created", table_name="ai_response_logs")
-    
-    op.drop_index("ix_audit_logs_resource_created", table_name="audit_logs")
-    op.drop_index("ix_audit_logs_merchant_action_created", table_name="audit_logs")
     
     op.drop_index("ix_bank_statement_entries_merchant_hash", table_name="bank_statement_entries")
     op.drop_index("ix_bank_statement_entries_merchant_bank_date", table_name="bank_statement_entries")
@@ -156,4 +109,3 @@ def downgrade() -> None:
     
     op.drop_index("ix_transactions_merchant_provider_created", table_name="transactions")
     op.drop_index("ix_transactions_merchant_status_created", table_name="transactions")
-    op.drop_index("ix_transactions_merchant_created", table_name="transactions")
