@@ -18,6 +18,9 @@ export async function register(payload: RegisterRequest): Promise<LoginResponse>
     localStorage.setItem('token', data.access_token)
     if (data.user) {
       localStorage.setItem('user', JSON.stringify(data.user))
+      if (data.user.merchant_id) {
+        localStorage.setItem('merchant_id', data.user.merchant_id)
+      }
     }
   }
   return data

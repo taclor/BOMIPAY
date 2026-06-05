@@ -63,7 +63,6 @@ export function useDashboardSummary() {
       const { data } = await api.get<DashboardSummary>('/dashboard')
       return data
     },
-    placeholderData: MOCK_SUMMARY,
     staleTime: 30000,
   })
 }
@@ -75,7 +74,6 @@ export function useDashboardMetrics() {
       const { data } = await api.get<DashboardMetrics>('/dashboard/metrics')
       return data
     },
-    placeholderData: MOCK_METRICS,
     staleTime: 60000,
   })
 }
@@ -87,7 +85,6 @@ export function useDashboardProviders() {
       const { data } = await api.get<ProviderSummary[]>('/dashboard/providers')
       return data
     },
-    placeholderData: MOCK_PROVIDERS,
     staleTime: 30000,
   })
 }
@@ -99,7 +96,6 @@ export function useDashboardActivities() {
       const { data } = await api.get<Activity[]>('/dashboard/activities')
       return data
     },
-    placeholderData: MOCK_ACTIVITIES,
     staleTime: 15000,
   })
 }
@@ -111,7 +107,6 @@ export function useAISummary() {
       const { data } = await api.get<AISummary>('/ai-assistant/summary')
       return data
     },
-    placeholderData: MOCK_AI_SUMMARY,
     staleTime: 120000,
   })
 }

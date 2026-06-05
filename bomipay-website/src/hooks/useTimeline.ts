@@ -41,7 +41,6 @@ export function useTimeline(filters: TimelineFilters = {}) {
     },
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.next_cursor ?? null,
-    placeholderData: { pages: [MOCK_EVENTS], pageParams: [null] },
     staleTime: 15000,
   })
 }

@@ -21,6 +21,13 @@ interface FieldError {
   confirmPassword?: string
 }
 
+interface PasswordValidation {
+  minLength: boolean
+  uppercase: boolean
+  lowercase: boolean
+  digit: boolean
+}
+
 function validateForm(form: FormState): FieldError {
   const errors: FieldError = {}
   if (!form.fullName.trim()) errors.fullName = 'Full name is required'
@@ -29,9 +36,21 @@ function validateForm(form: FormState): FieldError {
   if (form.phone && !/^\+?[\d\s\-()]{7,15}$/.test(form.phone)) errors.phone = 'Invalid phone number'
   if (!form.password) errors.password = 'Password is required'
   else if (form.password.length < 12) errors.password = 'Password must be at least 12 characters'
+  else if (!getPasswordValidation(form.password).uppercase) errors.password = 'Password must contain at least one uppercase letter'
+  else if (!getPasswordValidation(form.password).lowercase) errors.password = 'Password must contain at least one lowercase letter'
+  else if (!getPasswordValidation(form.password).digit) errors.password = 'Password must contain at least one digit'
   if (!form.confirmPassword) errors.confirmPassword = 'Please confirm your password'
   else if (form.password !== form.confirmPassword) errors.confirmPassword = 'Passwords do not match'
   return errors
+}
+
+function getPasswordValidation(password: string): PasswordValidation {
+  return {
+    minLength: password.length >= 12,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    digit: /\d/.test(password),
+  }
 }
 
 export default function SignupPage() {
@@ -48,10 +67,20 @@ export default function SignupPage() {
   const [fieldErrors, setFieldErrors] = useState<FieldError>({})
   const [loading, setLoading] = useState(false)
   const [serverError, setServerError] = useState('')
+  const [passwordValidation, setPasswordValidation] = useState<PasswordValidation>({
+    minLength: false,
+    uppercase: false,
+    lowercase: false,
+    digit: false,
+  })
 
   const update = (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }))
+    const value = e.target.value
+    setForm((prev) => ({ ...prev, [field]: value }))
     if (fieldErrors[field]) setFieldErrors((prev) => ({ ...prev, [field]: undefined }))
+    if (field === 'password') {
+      setPasswordValidation(getPasswordValidation(value))
+    }
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -69,10 +98,10 @@ export default function SignupPage() {
       await register({
         full_name: form.fullName,
         email: form.email,
-        phone: form.phone || '+00000000000',
+        phone: form.phone || null,
         password: form.password,
       })
-      router.push('/dashboard')
+      router.push('/onboarding')
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detail?: string } } }
       setServerError(axiosErr.response?.data?.detail ?? 'Registration failed. Please try again.')
@@ -175,6 +204,34 @@ export default function SignupPage() {
                 </button>
               </div>
               {fieldErrors.password && <p className="mt-1 text-xs text-red-600">{fieldErrors.password}</p>}
+              {form.password && (
+                <div className="mt-2 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-4 h-4 rounded-full ${passwordValidation.minLength ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className={`text-xs ${passwordValidation.minLength ? 'text-green-600' : 'text-gray-600'}`}>
+                      At least 12 characters
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-4 h-4 rounded-full ${passwordValidation.uppercase ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className={`text-xs ${passwordValidation.uppercase ? 'text-green-600' : 'text-gray-600'}`}>
+                      At least one uppercase letter
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-4 h-4 rounded-full ${passwordValidation.lowercase ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className={`text-xs ${passwordValidation.lowercase ? 'text-green-600' : 'text-gray-600'}`}>
+                      At least one lowercase letter
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-4 h-4 rounded-full ${passwordValidation.digit ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className={`text-xs ${passwordValidation.digit ? 'text-green-600' : 'text-gray-600'}`}>
+                      At least one digit
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Confirm Password */}

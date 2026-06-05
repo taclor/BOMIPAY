@@ -41,14 +41,16 @@ export default function AIPage() {
 
   const aiQuery = useAIQuery()
   const bottomRef = useRef<HTMLDivElement>(null)
+  const idCounterRef = useRef(0)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   const sendQuery = async (query: string) => {
-    const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', content: query }
-    const loadingMsg: Message = { id: `a-${Date.now()}`, role: 'assistant', loading: true }
+    const id = ++idCounterRef.current
+    const userMsg: Message = { id: `u-${id}`, role: 'user', content: query }
+    const loadingMsg: Message = { id: `a-${id}`, role: 'assistant', loading: true }
 
     setMessages((prev) => [...prev, userMsg, loadingMsg])
 

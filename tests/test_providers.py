@@ -113,3 +113,42 @@ async def test_provider_connect_forbidden_for_other_merchant(client, db_session)
         headers=headers,
     )
     assert connect_resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_provider_test_connection(client):
+    registration = {
+        "full_name": "Test User",
+        "email": "testconn@example.com",
+        "phone": "+2348000000007",
+        "password": "TestPass123!",
+        "merchant_name": "Test Store",
+        "business_type": "retail",
+        "country": "NG",
+    }
+
+    reg_resp = await client.post("/api/v1/auth/register", json=registration)
+    assert reg_resp.status_code == 201
+
+    login_resp = await client.post(
+        "/api/v1/auth/login",
+        json={"email": registration["email"], "password": registration["password"]},
+    )
+    assert login_resp.status_code == 200
+    headers = {"Authorization": f"Bearer {login_resp.json()['access_token']}"}
+
+    test_resp = await client.post(
+        "/api/v1/providers/test-connection",
+        json={
+            "provider_name": "paystack",
+            "public_key": "pk_test_123",
+            "secret_key": "sk_test_123",
+            "webhook_secret": "whsec_test_123",
+        },
+        headers=headers,
+    )
+    assert test_resp.status_code == 200
+    payload = test_resp.json()
+    assert "success" in payload
+    assert "message" in payload
+

@@ -65,7 +65,6 @@ export function useProviderHealthMetrics() {
       const { data } = await api.get<ProviderHealthMetrics[]>('/providers/health-metrics')
       return data
     },
-    placeholderData: MOCK_METRICS,
     staleTime: 30000,
   })
 }
@@ -77,7 +76,6 @@ export function useProviderHealthHistory(name: string) {
       const { data } = await api.get<ProviderHealthHistory>(`/providers/${name}/health-history`)
       return data
     },
-    placeholderData: MOCK_HISTORY[name] ?? MOCK_HISTORY['paystack'],
     enabled: !!name,
     staleTime: 300000,
   })

@@ -9,6 +9,8 @@ from ..schemas.provider import (
     ProviderConnectResponse,
     ProviderHealthResponse,
     ProviderListResponse,
+    ProviderTestRequest,
+    ProviderTestResponse,
 )
 from ..services.auth import get_current_active_user, require_role
 from ..services.audit import log_audit_event
@@ -18,6 +20,29 @@ from ..services.providers import ProviderAdapterRegistry
 from ..services.data_source import DataSourceService
 
 router = APIRouter()
+
+
+@router.post("/providers/test-connection", response_model=ProviderTestResponse)
+async def test_connection(
+    payload: ProviderTestRequest,
+    current_user=Depends(get_current_active_user),
+) -> ProviderTestResponse:
+    adapter = ProviderAdapterRegistry.get_adapter(payload.provider_name)
+    if adapter is None:
+        return ProviderTestResponse(success=False, message="Unsupported provider")
+
+    credentials = {
+        "api_key": payload.public_key,
+        "secret_key": payload.secret_key,
+    }
+    try:
+        is_valid = adapter.connect_account(credentials)
+        if is_valid:
+            return ProviderTestResponse(success=True, message="Connection successful")
+        else:
+            return ProviderTestResponse(success=False, message="Invalid credentials")
+    except Exception as e:
+        return ProviderTestResponse(success=False, message=str(e))
 
 
 @router.post("/providers/connect", response_model=ProviderConnectResponse)

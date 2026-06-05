@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import { ChevronRight } from 'lucide-react'
+
 import SeverityBadge from '@/components/shared/SeverityBadge'
 import StatusBadge from '@/components/shared/StatusBadge'
 import AmountDisplay from '@/components/shared/AmountDisplay'

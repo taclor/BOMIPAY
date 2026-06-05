@@ -64,7 +64,6 @@ export function useIncidents() {
       const { data } = await api.get<PaginatedResponse<Incident> | Incident[]>('/incidents')
       return Array.isArray(data) ? data : data.items
     },
-    placeholderData: MOCK_INCIDENTS,
     staleTime: 30000,
   })
 }
@@ -76,7 +75,6 @@ export function useIncident(id: string) {
       const { data } = await api.get<Incident>(`/incidents/${id}`)
       return data
     },
-    placeholderData: MOCK_INCIDENTS.find((i) => i.id === id),
     enabled: !!id,
   })
 }

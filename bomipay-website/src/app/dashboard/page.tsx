@@ -104,8 +104,18 @@ export default function DashboardPage() {
       <div className="mb-6">
         <h2 className="text-[10px] text-gray-500 uppercase tracking-wider mb-3 font-medium">Provider Health</h2>
         {(providers ?? []).length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            <p>No providers connected yet. Add a payment provider to get started.</p>
+          <div className="bg-white border border-gray-200 rounded-lg p-8 flex flex-col items-center justify-center text-center">
+            <p className="text-2xl mb-2">🔗</p>
+            <p className="text-gray-900 font-medium mb-1">No providers connected</p>
+            <p className="text-gray-600 text-sm mb-4">
+              Start by connecting a payment provider to sync transactions and track settlement data.
+            </p>
+            <a
+              href="/providers/connect"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+            >
+              Connect Your First Provider
+            </a>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

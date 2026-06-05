@@ -79,7 +79,7 @@ function graphToFlow(graph: PaymentGraph): { nodes: Node[]; edges: Edge[] } {
   return { nodes, edges }
 }
 
-function NodeDetail({ node, graphNode, onClose }: { node: Node; graphNode: GraphNode | undefined; onClose: () => void }) {
+function NodeDetail({ graphNode, onClose }: { node: Node; graphNode: GraphNode | undefined; onClose: () => void }) {
   if (!graphNode) return null
   return (
     <div className="absolute right-4 top-4 w-64 bg-white border border-gray-200 rounded-lg p-4 z-10 shadow-md">
@@ -114,17 +114,16 @@ export default function GraphPage() {
   const [searchId, setSearchId] = useState('')
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
 
-  const { data: graph, refetch } = useQuery({
+  const { data: graph, isLoading, error, refetch } = useQuery({
     queryKey: ['graph', searchId],
     queryFn: async () => {
       const { data } = await api.get<PaymentGraph>(`/payment-graph/transactions/${searchId}`)
       return data
     },
-    placeholderData: MOCK_GRAPH,
-    enabled: true,
+    enabled: !!searchId,
   })
 
-  const { nodes: initialNodes, edges: initialEdges } = graphToFlow(graph ?? MOCK_GRAPH)
+  const { nodes: initialNodes, edges: initialEdges } = graphToFlow(graph ?? { nodes: [], edges: [], transaction_id: '' })
   const [nodes, , onNodesChange] = useNodesState(initialNodes)
   const [edges, , onEdgesChange] = useEdgesState(initialEdges)
 
@@ -170,28 +169,53 @@ export default function GraphPage() {
 
       {/* Graph */}
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden relative" style={{ height: 'calc(100vh - 18rem)' }}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onNodeClick={onNodeClick}
-          fitView
-        >
-          <Background variant={BackgroundVariant.Dots} color="#1f2937" gap={20} size={1} />
-          <Controls />
-          <MiniMap
-            style={{ background: '#F8FAFC', border: '1px solid #E5E7EB' }}
-            nodeColor={(n) => NODE_COLORS[(n.data as { nodeType?: string })?.nodeType ?? ''] ?? '#6b7280'}
-          />
-        </ReactFlow>
+        {isLoading && !graph && (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="animate-spin h-8 w-8 border-2 border-blue-600 border-t-transparent rounded-full" />
+          </div>
+        )}
 
-        {selectedNodeId && selectedFlowNode && selectedGraphNode && (
-          <NodeDetail
-            node={selectedFlowNode}
-            graphNode={selectedGraphNode}
-            onClose={() => setSelectedNodeId(null)}
-          />
+        {error && !graph && (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-4">
+            <p className="text-red-600 text-sm">{error instanceof Error ? error.message : 'Error loading graph'}</p>
+            <button onClick={() => refetch()} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              Retry
+            </button>
+          </div>
+        )}
+
+        {!searchId && !isLoading && (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-3">
+            <p className="text-gray-500">Search for a transaction ID to explore the payment graph</p>
+          </div>
+        )}
+
+        {graph && (
+          <>
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onNodeClick={onNodeClick}
+              fitView
+            >
+              <Background variant={BackgroundVariant.Dots} color="#1f2937" gap={20} size={1} />
+              <Controls />
+              <MiniMap
+                style={{ background: '#F8FAFC', border: '1px solid #E5E7EB' }}
+                nodeColor={(n) => NODE_COLORS[(n.data as { nodeType?: string })?.nodeType ?? ''] ?? '#6b7280'}
+              />
+            </ReactFlow>
+
+            {selectedNodeId && selectedFlowNode && selectedGraphNode && (
+              <NodeDetail
+                node={selectedFlowNode}
+                graphNode={selectedGraphNode}
+                onClose={() => setSelectedNodeId(null)}
+              />
+            )}
+          </>
         )}
       </div>
     </Shell>

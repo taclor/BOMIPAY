@@ -15,6 +15,18 @@ class ProviderConnectRequest(BaseModel):
     credentials: ProviderCredentials
 
 
+class ProviderTestRequest(BaseModel):
+    provider_name: constr(min_length=2, max_length=128)
+    public_key: constr(min_length=1)
+    secret_key: constr(min_length=1)
+    webhook_secret: Optional[str] = None
+
+
+class ProviderTestResponse(BaseModel):
+    success: bool
+    message: Optional[str] = None
+
+
 class ProviderAccountData(BaseModel):
     provider_account_id: UUID | str
     provider_name: str

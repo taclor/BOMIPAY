@@ -72,17 +72,49 @@ function ActionCard({ action }: { action: ActionItem }) {
 }
 
 export default function ActionsPage() {
-  const { data, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['action-center'],
     queryFn: async () => {
       const { data } = await api.get<ActionCenterResponse>('/action-center')
       return data
     },
-    placeholderData: MOCK_ACTIONS,
     staleTime: 30000,
   })
 
   const actions = data?.actions.sort((a, b) => a.priority - b.priority) ?? []
+
+  if (isLoading && !data) {
+    return (
+      <Shell title="Action Center" onRefresh={() => refetch()}>
+        <div className="min-h-96 flex items-center justify-center">
+          <div className="animate-spin h-8 w-8 border-2 border-blue-600 border-t-transparent rounded-full" />
+        </div>
+      </Shell>
+    )
+  }
+
+  if (error && !data) {
+    return (
+      <Shell title="Action Center" onRefresh={() => refetch()}>
+        <div className="min-h-96 flex flex-col items-center justify-center gap-4">
+          <p className="text-red-600 text-sm">{error instanceof Error ? error.message : 'Error loading actions'}</p>
+          <button onClick={() => refetch()} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            Retry
+          </button>
+        </div>
+      </Shell>
+    )
+  }
+
+  if (!isLoading && actions.length === 0) {
+    return (
+      <Shell title="Action Center" onRefresh={() => refetch()}>
+        <div className="min-h-96 flex flex-col items-center justify-center gap-3">
+          <p className="text-gray-500">No actions available</p>
+        </div>
+      </Shell>
+    )
+  }
 
   return (
     <Shell title="Action Center" onRefresh={() => refetch()}>

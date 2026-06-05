@@ -4,7 +4,7 @@ import { X, Brain, CheckCircle, Clock } from 'lucide-react'
 import SeverityBadge from '@/components/shared/SeverityBadge'
 import StatusBadge from '@/components/shared/StatusBadge'
 import AmountDisplay from '@/components/shared/AmountDisplay'
-import { formatDate, formatRelative } from '@/lib/utils'
+import { formatRelative } from '@/lib/utils'
 import type { Incident } from '@/types/api'
 
 interface IncidentDetailProps {

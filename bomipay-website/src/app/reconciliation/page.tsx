@@ -34,22 +34,20 @@ const MATCH_ICONS: Record<MatchStatus, React.ReactNode> = {
 export default function ReconciliationPage() {
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const { data: recon, refetch: refetchRecon } = useQuery({
+  const { data: recon, isLoading: reconLoading, error: reconError, refetch: refetchRecon } = useQuery({
     queryKey: ['reconciliation'],
     queryFn: async () => {
       const { data } = await api.get<ReconciliationEntry[]>('/reconciliation')
       return data
     },
-    placeholderData: MOCK_RECON,
   })
 
-  const { data: bank, refetch: refetchBank } = useQuery({
+  const { data: bank, isLoading: bankLoading, error: bankError, refetch: refetchBank } = useQuery({
     queryKey: ['bank-statements'],
     queryFn: async () => {
       const { data } = await api.get<BankStatementEntry[]>('/bank-statements/entries')
       return data
     },
-    placeholderData: MOCK_BANK,
   })
 
   const upload = useMutation({
@@ -64,6 +62,33 @@ export default function ReconciliationPage() {
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) upload.mutate(file)
+  }
+
+  const isLoading = reconLoading || bankLoading
+  const hasError = reconError || bankError
+  const hasData = (recon?.length ?? 0) > 0 || (bank?.length ?? 0) > 0
+
+  if (isLoading && !hasData) {
+    return (
+      <Shell title="Reconciliation Desk" onRefresh={() => { refetchRecon(); refetchBank() }}>
+        <div className="min-h-96 flex items-center justify-center">
+          <div className="animate-spin h-8 w-8 border-2 border-blue-600 border-t-transparent rounded-full" />
+        </div>
+      </Shell>
+    )
+  }
+
+  if (hasError && !hasData) {
+    return (
+      <Shell title="Reconciliation Desk" onRefresh={() => { refetchRecon(); refetchBank() }}>
+        <div className="min-h-96 flex flex-col items-center justify-center gap-4">
+          <p className="text-red-600 text-sm">Error loading reconciliation data</p>
+          <button onClick={() => { refetchRecon(); refetchBank() }} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            Retry
+          </button>
+        </div>
+      </Shell>
+    )
   }
 
   return (
@@ -93,26 +118,30 @@ export default function ReconciliationPage() {
             <span className="text-[10px] text-gray-400">{recon?.length ?? 0} entries</span>
           </div>
           <div className="divide-y divide-gray-100">
-            {(recon ?? []).map((entry) => (
-              <div key={entry.id} className="px-4 py-3 flex items-center gap-3">
-                {MATCH_ICONS[entry.match_status]}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-900 font-mono">{entry.transaction_id}</span>
-                    <span className="text-[10px] text-gray-500 capitalize">{entry.provider}</span>
+            {(recon?.length ?? 0) === 0 ? (
+              <div className="px-4 py-6 text-center text-gray-500 text-sm">No settlement data available</div>
+            ) : (
+              (recon ?? []).map((entry) => (
+                <div key={entry.id} className="px-4 py-3 flex items-center gap-3">
+                  {MATCH_ICONS[entry.match_status]}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-900 font-mono">{entry.transaction_id}</span>
+                      <span className="text-[10px] text-gray-500 capitalize">{entry.provider}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <AmountDisplay amount={entry.provider_amount} size="sm" />
+                      {entry.difference !== undefined && entry.difference !== 0 && (
+                        <span className="text-[10px] text-red-600 font-mono">
+                          Δ {entry.difference > 0 ? '+' : ''}{(entry.difference / 100).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <AmountDisplay amount={entry.provider_amount} size="sm" />
-                    {entry.difference !== undefined && entry.difference !== 0 && (
-                      <span className="text-[10px] text-red-600 font-mono">
-                        Δ {entry.difference > 0 ? '+' : ''}{(entry.difference / 100).toLocaleString()}
-                      </span>
-                    )}
-                  </div>
+                  <StatusBadge status={entry.match_status} />
                 </div>
-                <StatusBadge status={entry.match_status} />
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -123,19 +152,23 @@ export default function ReconciliationPage() {
             <span className="text-[10px] text-gray-400">{bank?.length ?? 0} entries</span>
           </div>
           <div className="divide-y divide-gray-100">
-            {(bank ?? []).map((entry) => (
-              <div key={entry.id} className="px-4 py-3 flex items-center gap-3">
-                {MATCH_ICONS[entry.match_status]}
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-900 truncate">{entry.description}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <AmountDisplay amount={entry.amount} size="sm" />
-                    <span className="text-[10px] text-gray-400 font-mono">{formatDate(entry.date).split(',')[0]}</span>
+            {(bank?.length ?? 0) === 0 ? (
+              <div className="px-4 py-6 text-center text-gray-500 text-sm">No bank statement data available</div>
+            ) : (
+              (bank ?? []).map((entry) => (
+                <div key={entry.id} className="px-4 py-3 flex items-center gap-3">
+                  {MATCH_ICONS[entry.match_status]}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-900 truncate">{entry.description}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <AmountDisplay amount={entry.amount} size="sm" />
+                      <span className="text-[10px] text-gray-400 font-mono">{formatDate(entry.date).split(',')[0]}</span>
+                    </div>
                   </div>
+                  <StatusBadge status={entry.match_status} />
                 </div>
-                <StatusBadge status={entry.match_status} />
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

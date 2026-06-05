@@ -9,7 +9,7 @@ export interface LoginRequest {
 export interface RegisterRequest {
   full_name: string
   email: string
-  phone: string
+  phone?: string | null
   password: string
   merchant_name?: string
   business_type?: string
