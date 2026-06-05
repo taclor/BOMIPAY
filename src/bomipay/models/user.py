@@ -27,7 +27,7 @@ class User(Base, TimestampMixin):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     email = Column(String(320), nullable=False, unique=True, index=True)
     full_name = Column(String(255), nullable=False)
-    phone = Column(String(24), nullable=False)
+    phone = Column(String(24), nullable=True)
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean, nullable=False, default=True)
     status = Column(String(32), nullable=False, default=UserStatus.active.value)

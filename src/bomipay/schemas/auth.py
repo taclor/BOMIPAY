@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, constr, field_seria
 class UserRegisterRequest(BaseModel):
     full_name: constr(min_length=2, max_length=255)
     email: EmailStr
-    phone: constr(min_length=10, max_length=24)
+    phone: Optional[constr(min_length=10, max_length=24)] = None
     password: constr(min_length=12)
     merchant_name: Optional[constr(min_length=2, max_length=255)] = None
     business_type: Optional[constr(max_length=128)] = None
