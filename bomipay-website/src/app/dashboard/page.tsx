@@ -16,9 +16,22 @@ import { bpsToPercent, formatNGN } from '@/lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, TrendingDown, ShieldAlert, Clock, AlertCircle } from 'lucide-react'
 
+function DashboardSkeleton() {
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-6">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div key={i} className="bg-white rounded-lg border border-gray-200 p-6 animate-pulse">
+          <div className="h-4 bg-gray-200 rounded mb-2 w-1/2" />
+          <div className="h-8 bg-gray-200 rounded w-1/3" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function DashboardPage() {
   const qc = useQueryClient()
-  const { data: summary } = useDashboardSummary()
+  const { data: summary, isLoading } = useDashboardSummary()
   const { data: metrics } = useDashboardMetrics()
   const { data: providers } = useDashboardProviders()
   const { data: activities } = useDashboardActivities()
@@ -27,6 +40,14 @@ export default function DashboardPage() {
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ['dashboard'] })
     qc.invalidateQueries({ queryKey: ['ai', 'summary'] })
+  }
+
+  if (isLoading) {
+    return (
+      <Shell title="Mission Control" subtitle="LOADING">
+        <DashboardSkeleton />
+      </Shell>
+    )
   }
 
   return (
@@ -58,9 +79,9 @@ export default function DashboardPage() {
           icon={<ShieldAlert className="w-3.5 h-3.5" />}
           badge={summary ? (
             <span className={`text-[10px] px-1.5 py-0.5 rounded border font-mono uppercase tracking-wider ${
-              summary.money_at_risk_status === 'critical' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
-              summary.money_at_risk_status === 'warning' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30' :
-              'bg-green-500/10 text-green-400 border-green-500/30'
+              summary.money_at_risk_status === 'critical' ? 'bg-red-50 text-red-700 border-red-200' :
+              summary.money_at_risk_status === 'warning' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+              'bg-green-50 text-green-700 border-green-200'
             }`}>{summary.money_at_risk_status}</span>
           ) : undefined}
         />
@@ -82,22 +103,34 @@ export default function DashboardPage() {
       {/* Provider Health */}
       <div className="mb-6">
         <h2 className="text-[10px] text-gray-500 uppercase tracking-wider mb-3 font-medium">Provider Health</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {(providers ?? []).map((provider) => (
-            <ProviderHealthCard key={provider.name} provider={provider} />
-          ))}
-        </div>
+        {(providers ?? []).length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            <p>No providers connected yet. Add a payment provider to get started.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {(providers ?? []).map((provider) => (
+              <ProviderHealthCard key={provider.name} provider={provider} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Activity + AI */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-[#111827] border border-[#1f2937] rounded p-4">
-          <h2 className="text-[10px] text-gray-500 uppercase tracking-wider mb-3 font-medium">Recent Activity</h2>
-          <ActivityFeed activities={activities ?? []} />
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3">Recent Activity</h2>
+          {(activities ?? []).length === 0 ? (
+            <div className="text-center py-8 text-gray-500 text-sm">
+              <p>No data yet. Connect a payment provider to get started.</p>
+            </div>
+          ) : (
+            <ActivityFeed activities={activities ?? []} />
+          )}
         </div>
 
-        <div className="bg-[#111827] border border-[#1f2937] rounded p-4">
-          <h2 className="text-[10px] text-gray-500 uppercase tracking-wider mb-3 font-medium flex items-center gap-1.5">
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
             AI Operational Insight
           </h2>

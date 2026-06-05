@@ -8,10 +8,10 @@ interface SeverityBadgeProps {
 }
 
 const SEVERITY_CONFIG: Record<string, { label: string; className: string; Icon: React.ElementType }> = {
-  critical: { label: 'CRITICAL', className: 'bg-red-500/20 text-red-400 border-red-500/40', Icon: AlertOctagon },
-  high: { label: 'HIGH', className: 'bg-orange-500/20 text-orange-400 border-orange-500/40', Icon: AlertTriangle },
-  medium: { label: 'MEDIUM', className: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40', Icon: AlertCircle },
-  low: { label: 'LOW', className: 'bg-blue-500/20 text-blue-400 border-blue-500/40', Icon: Info },
+  critical: { label: 'CRITICAL', className: 'bg-red-50 text-red-700 border-red-200', Icon: AlertOctagon },
+  high: { label: 'HIGH', className: 'bg-orange-50 text-orange-700 border-orange-200', Icon: AlertTriangle },
+  medium: { label: 'MEDIUM', className: 'bg-yellow-50 text-yellow-700 border-yellow-200', Icon: AlertCircle },
+  low: { label: 'LOW', className: 'bg-blue-50 text-blue-700 border-blue-200', Icon: Info },
 }
 
 export default function SeverityBadge({ severity, showIcon = true, className }: SeverityBadgeProps) {

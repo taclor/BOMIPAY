@@ -21,8 +21,11 @@ async def test_register_login_and_me(client):
     response = await client.post("/api/v1/auth/register", json=registration)
     assert response.status_code == 201
     payload = response.json()
-    assert payload["email"] == registration["email"]
-    assert payload["merchant_id"] is not None
+    assert payload["access_token"]
+    assert payload["refresh_token"]
+    assert payload["user"]["email"] == registration["email"]
+    assert payload["user"]["merchant_id"] is not None
+
     access = await client.post(
         "/api/v1/auth/login",
         json={"email": registration["email"], "password": registration["password"]},
@@ -31,6 +34,8 @@ async def test_register_login_and_me(client):
     tokens = access.json()
     assert tokens["access_token"]
     assert tokens["refresh_token"]
+    assert tokens["user"]["email"] == registration["email"]
+
     auth_header = {"Authorization": f"Bearer {tokens['access_token']}"}
     me = await client.get("/api/v1/auth/me", headers=auth_header)
     assert me.status_code == 200
@@ -58,6 +63,7 @@ async def test_duplicate_registration_is_conflict(client):
     assert first.status_code == 201
     second = await client.post("/api/v1/auth/register", json=payload)
     assert second.status_code == 409
+    assert "email" in second.json()["detail"].lower()
 
 
 @pytest.mark.asyncio
@@ -81,3 +87,67 @@ def test_app_lifespan_and_cors_are_hardened():
     cors_middleware = next(m for m in app.user_middleware if m.cls.__name__ == "CORSMiddleware")
     assert cors_middleware.kwargs["allow_origins"]
     assert "*" not in cors_middleware.kwargs["allow_origins"]
+
+
+@pytest.mark.asyncio
+async def test_register_auto_merchant_creation(client):
+    """Registering without merchant_name creates a merchant from email prefix."""
+    payload = {
+        "full_name": "Emeka Obi",
+        "email": "emeka.obi@example.com",
+        "phone": "+2348000000099",
+        "password": "SecureAutoMerch1!",
+    }
+    response = await client.post("/api/v1/auth/register", json=payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["user"]["merchant_id"] is not None
+
+
+@pytest.mark.asyncio
+async def test_login_returns_user_object(client):
+    """Login response must include user object with id, email, full_name, role, merchant_id."""
+    payload = {
+        "full_name": "Chioma Eze",
+        "email": "chioma@example.com",
+        "phone": "+2348000000098",
+        "password": "LoginUserTest1!",
+        "merchant_name": "Chioma Biz",
+    }
+    reg = await client.post("/api/v1/auth/register", json=payload)
+    assert reg.status_code == 201
+
+    login = await client.post(
+        "/api/v1/auth/login",
+        json={"email": payload["email"], "password": payload["password"]},
+    )
+    assert login.status_code == 200
+    data = login.json()
+    assert "user" in data
+    user = data["user"]
+    assert user["email"] == payload["email"]
+    assert user["full_name"] == payload["full_name"]
+    assert user["role"] == "merchant_user"
+    assert user["merchant_id"] is not None
+
+
+@pytest.mark.asyncio
+async def test_weak_password_returns_422(client):
+    """Passwords that lack uppercase, lowercase, or digit must return 422."""
+    base = {
+        "full_name": "Weak Pass User",
+        "email": "weakpass@example.com",
+        "phone": "+2348000000097",
+    }
+
+    # too short
+    r = await client.post("/api/v1/auth/register", json={**base, "password": "Short1!"})
+    assert r.status_code == 422
+
+    # no uppercase
+    r = await client.post("/api/v1/auth/register", json={**base, "password": "alllowercasenum1234"})
+    assert r.status_code == 422
+
+    # no digit
+    r = await client.post("/api/v1/auth/register", json={**base, "password": "NoDigitPasswordHere"})
+    assert r.status_code == 422

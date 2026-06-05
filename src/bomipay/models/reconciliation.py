@@ -100,14 +100,5 @@ class ReconciliationResult(Base, TimestampMixin):
     transaction = relationship("Transaction")
 
 
-class Settlement(Base, TimestampMixin):
-    __tablename__ = "settlements"
-
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    merchant_id = Column(GUID(), ForeignKey("merchants.id"), nullable=False, index=True)
-    provider_name = Column(String(128), nullable=False)
-    settlement_reference = Column(String(255), nullable=False, index=True)
-    amount = Column(Integer, nullable=False)
-    currency = Column(String(16), nullable=False)
-    settled_at = Column(DateTime(timezone=True), nullable=False)
-    metadata_json = Column(JSON, nullable=True)
+# Settlement moved to models/settlement.py; re-exported here for backwards compat.
+from .settlement import Settlement  # noqa: F401, E402

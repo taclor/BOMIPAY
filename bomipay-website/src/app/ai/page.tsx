@@ -81,7 +81,7 @@ export default function AIPage() {
               key={q}
               onClick={() => sendQuery(q)}
               disabled={aiQuery.isPending}
-              className="px-3 py-1.5 rounded bg-[#111827] border border-[#1f2937] text-xs text-gray-400 hover:text-gray-200 hover:bg-[#1a2332] hover:border-[#374151] transition-colors disabled:opacity-50"
+              className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-xs text-gray-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-colors disabled:opacity-50"
             >
               {q}
             </button>
@@ -103,7 +103,7 @@ export default function AIPage() {
         </div>
 
         {/* Input */}
-        <div className="mt-4 pt-4 border-t border-[#1f2937]">
+        <div className="mt-4 pt-4 border-t border-gray-200">
           <ChatInput onSubmit={sendQuery} disabled={aiQuery.isPending} />
           <div className="flex items-center justify-between mt-2 px-1">
             <span className="text-[10px] text-gray-600">Press Shift+Enter for new line</span>

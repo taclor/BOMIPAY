@@ -266,6 +266,216 @@ class TestEventHandlers:
             assert callable(handler)
 
 
+class TestEventHandlersBehavior:
+    """Tests verifying real behavior of implemented event handlers."""
+
+    def _mock_db_session(self):
+        """Return a fully-mocked async session usable as async context manager."""
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.first.return_value = None
+
+        # begin() must return a plain object that is an async context manager,
+        # NOT an awaitable — because handlers use `async with db.begin():`.
+        mock_begin_ctx = MagicMock()
+        mock_begin_ctx.__aenter__ = AsyncMock(return_value=None)
+        mock_begin_ctx.__aexit__ = AsyncMock(return_value=False)
+
+        # Use plain MagicMock so that begin() is a regular (non-coroutine) call.
+        mock_session = MagicMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=False)
+        mock_session.execute = AsyncMock(return_value=mock_result)
+        mock_session.begin = MagicMock(return_value=mock_begin_ctx)
+        mock_session.add = MagicMock()
+
+        return mock_session
+
+    # ------------------------------------------------------------------
+    # Dead-letter tests
+    # ------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_dead_letter_exception_not_raised(self):
+        """A handler that raises must NOT propagate — dead-letter mechanism."""
+        async def broken_handler(payload):
+            raise RuntimeError("simulated failure")
+
+        original = EventHandlers.HANDLERS.get("transaction.created")
+        EventHandlers.HANDLERS["transaction.created"] = broken_handler
+        try:
+            # Must NOT raise
+            await EventHandlers.handle_event("transaction.created", {"amount": 100})
+        finally:
+            EventHandlers.HANDLERS["transaction.created"] = original
+
+    @pytest.mark.asyncio
+    async def test_unknown_event_type_does_not_raise(self):
+        """An unregistered event type is silently ignored."""
+        await EventHandlers.handle_event("totally.unknown.event", {})
+
+    # ------------------------------------------------------------------
+    # transaction.created
+    # ------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_transaction_created_adds_risk_alert_above_threshold(self):
+        """transaction.created adds an Alert when amount >= RISK_THRESHOLD_MINOR."""
+        from src.bomipay.models.alert import Alert as AlertModel
+
+        mock_session = self._mock_db_session()
+        with patch("src.bomipay.services.event_handlers.AsyncSessionLocal",
+                   MagicMock(return_value=mock_session)):
+            await EventHandlers.handle_transaction_created({
+                "aggregate_id": str(uuid.uuid4()),
+                "merchant_id": str(uuid.uuid4()),
+                "amount": 2_000_000,  # above 1_000_000 threshold
+            })
+
+        added = [c.args[0] for c in mock_session.add.call_args_list]
+        assert any(isinstance(obj, AlertModel) for obj in added)
+
+    @pytest.mark.asyncio
+    async def test_transaction_created_no_alert_below_threshold(self):
+        """transaction.created does NOT add an Alert for small amounts."""
+        from src.bomipay.models.alert import Alert as AlertModel
+
+        mock_session = self._mock_db_session()
+        with patch("src.bomipay.services.event_handlers.AsyncSessionLocal",
+                   MagicMock(return_value=mock_session)):
+            await EventHandlers.handle_transaction_created({
+                "aggregate_id": str(uuid.uuid4()),
+                "merchant_id": str(uuid.uuid4()),
+                "amount": 500,
+            })
+
+        added = [c.args[0] for c in mock_session.add.call_args_list]
+        assert not any(isinstance(obj, AlertModel) for obj in added)
+
+    @pytest.mark.asyncio
+    async def test_transaction_created_always_logs_audit(self):
+        """transaction.created always writes an AuditLog regardless of amount."""
+        from src.bomipay.models.audit import AuditLog as AuditModel
+
+        mock_session = self._mock_db_session()
+        with patch("src.bomipay.services.event_handlers.AsyncSessionLocal",
+                   MagicMock(return_value=mock_session)):
+            await EventHandlers.handle_transaction_created({
+                "aggregate_id": str(uuid.uuid4()),
+                "merchant_id": str(uuid.uuid4()),
+                "amount": 100,
+            })
+
+        added = [c.args[0] for c in mock_session.add.call_args_list]
+        assert any(isinstance(obj, AuditModel) for obj in added)
+
+    # ------------------------------------------------------------------
+    # incident.created
+    # ------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_incident_created_adds_notification(self):
+        """incident.created creates an in-app Notification for the merchant."""
+        from src.bomipay.models.notification import Notification as NotificationModel
+
+        mock_session = self._mock_db_session()
+        with patch("src.bomipay.services.event_handlers.AsyncSessionLocal",
+                   MagicMock(return_value=mock_session)):
+            await EventHandlers.handle_incident_created({
+                "aggregate_id": str(uuid.uuid4()),
+                "merchant_id": str(uuid.uuid4()),
+                "title": "Provider outage detected",
+                "severity": "high",
+            })
+
+        added = [c.args[0] for c in mock_session.add.call_args_list]
+        notifications = [o for o in added if isinstance(o, NotificationModel)]
+        assert len(notifications) == 1
+        assert "Provider outage detected" in notifications[0].message
+
+    # ------------------------------------------------------------------
+    # alert.created
+    # ------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_alert_created_adds_notification(self):
+        """alert.created creates an in-app Notification for the merchant."""
+        from src.bomipay.models.notification import Notification as NotificationModel
+
+        mock_session = self._mock_db_session()
+        with patch("src.bomipay.services.event_handlers.AsyncSessionLocal",
+                   MagicMock(return_value=mock_session)):
+            await EventHandlers.handle_alert_created({
+                "aggregate_id": str(uuid.uuid4()),
+                "merchant_id": str(uuid.uuid4()),
+                "alert_type": "reconciliation_mismatch",
+                "description": "5 transactions unmatched",
+            })
+
+        added = [c.args[0] for c in mock_session.add.call_args_list]
+        notifications = [o for o in added if isinstance(o, NotificationModel)]
+        assert len(notifications) == 1
+
+    # ------------------------------------------------------------------
+    # reconciliation.completed
+    # ------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_reconciliation_completed_creates_incident_when_unmatched(self):
+        """reconciliation.completed creates Incident when unmatched_count > 0."""
+        from src.bomipay.models.incident import Incident as IncidentModel
+
+        mock_session = self._mock_db_session()
+        with patch("src.bomipay.services.event_handlers.AsyncSessionLocal",
+                   MagicMock(return_value=mock_session)):
+            await EventHandlers.handle_reconciliation_completed({
+                "aggregate_id": str(uuid.uuid4()),
+                "merchant_id": str(uuid.uuid4()),
+                "unmatched_count": 3,
+            })
+
+        added = [c.args[0] for c in mock_session.add.call_args_list]
+        incidents = [o for o in added if isinstance(o, IncidentModel)]
+        assert len(incidents) == 1
+        assert incidents[0].affected_transaction_count == 3
+
+    @pytest.mark.asyncio
+    async def test_reconciliation_completed_no_incident_when_zero_unmatched(self):
+        """reconciliation.completed does NOT create Incident when unmatched_count == 0."""
+        from src.bomipay.models.incident import Incident as IncidentModel
+
+        mock_session = self._mock_db_session()
+        with patch("src.bomipay.services.event_handlers.AsyncSessionLocal",
+                   MagicMock(return_value=mock_session)):
+            await EventHandlers.handle_reconciliation_completed({
+                "aggregate_id": str(uuid.uuid4()),
+                "merchant_id": str(uuid.uuid4()),
+                "unmatched_count": 0,
+            })
+
+        added = [c.args[0] for c in mock_session.add.call_args_list]
+        incidents = [o for o in added if isinstance(o, IncidentModel)]
+        assert len(incidents) == 0
+
+    # ------------------------------------------------------------------
+    # dispute.created
+    # ------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_dispute_created_calls_transaction_update(self):
+        """dispute.created issues a status update for the related transaction."""
+        mock_session = self._mock_db_session()
+        with patch("src.bomipay.services.event_handlers.AsyncSessionLocal",
+                   MagicMock(return_value=mock_session)):
+            await EventHandlers.handle_dispute_created({
+                "aggregate_id": str(uuid.uuid4()),
+                "merchant_id": str(uuid.uuid4()),
+                "transaction_id": str(uuid.uuid4()),
+            })
+
+        # execute() should have been called for the UPDATE statement
+        assert mock_session.execute.called
+
+
 class TestEventReplayer:
     """Tests for EventReplayer service."""
 

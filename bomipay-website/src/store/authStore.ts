@@ -6,8 +6,10 @@ interface AuthState {
   token: string | null
   user: User | null
   isAuthenticated: boolean
+  _hydrated: boolean
   setAuth: (token: string, user: User | null) => void
   clearAuth: () => void
+  setHydrated: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -16,6 +18,7 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       user: null,
       isAuthenticated: false,
+      _hydrated: false,
       setAuth: (token, user) => {
         set({ token, user: user ?? null, isAuthenticated: true })
         if (typeof window !== 'undefined') {
@@ -28,10 +31,14 @@ export const useAuthStore = create<AuthState>()(
           localStorage.removeItem('token')
         }
       },
+      setHydrated: () => set({ _hydrated: true }),
     }),
     {
       name: 'bomipay-auth',
       partialize: (state) => ({ token: state.token, user: state.user, isAuthenticated: state.isAuthenticated }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated()
+      },
     }
   )
 )

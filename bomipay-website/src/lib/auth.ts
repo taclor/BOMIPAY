@@ -1,8 +1,19 @@
 import api from './api'
-import type { LoginRequest, LoginResponse } from '@/types/api'
+import type { LoginRequest, LoginResponse, RegisterRequest } from '@/types/api'
 
 export async function login(credentials: LoginRequest): Promise<LoginResponse> {
   const { data } = await api.post<LoginResponse>('/auth/login', credentials)
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('token', data.access_token)
+    if (data.user) {
+      localStorage.setItem('user', JSON.stringify(data.user))
+    }
+  }
+  return data
+}
+
+export async function register(payload: RegisterRequest): Promise<LoginResponse> {
+  const { data } = await api.post<LoginResponse>('/auth/register', payload)
   if (typeof window !== 'undefined') {
     localStorage.setItem('token', data.access_token)
     if (data.user) {

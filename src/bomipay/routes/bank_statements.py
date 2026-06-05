@@ -75,7 +75,6 @@ async def import_bank_statement(
         actor_role=current_user.role.value,
         event_payload={"import_id": str(import_record.id), "file_name": file_name},
     )
-    await db.commit()
     return BankStatementImportResponse.model_validate(import_record)
 
 

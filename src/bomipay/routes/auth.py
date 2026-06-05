@@ -8,6 +8,7 @@ from ..db import get_db
 from ..schemas.auth import (
     RefreshTokenRequest,
     TokenResponse,
+    UserInToken,
     UserLoginRequest,
     UserRegisterRequest,
     UserResponse,
@@ -23,7 +24,7 @@ from ..models.user import Role
 router = APIRouter()
 
 
-@router.post("/auth/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/auth/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def register_user(
     payload: UserRegisterRequest,
     db: AsyncSession = Depends(get_db),
@@ -32,13 +33,14 @@ async def register_user(
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Email already registered",
+            detail="An account with this email already exists",
         )
 
     try:
+        merchant_name = payload.merchant_name or payload.email.split("@")[0]
         merchant = await UserService.create_merchant_for_user(
             db,
-            merchant_name=payload.merchant_name or payload.full_name,
+            merchant_name=merchant_name,
             email=payload.email,
             phone=payload.phone,
             business_type=payload.business_type,
@@ -53,6 +55,8 @@ async def register_user(
             role=Role.merchant_user,
             merchant_id=merchant.id,
         )
+        access_token = create_access_token(str(user.id))
+        refresh_token = create_refresh_token(str(user.id))
         log_audit_event(
             db,
             event_type="user.register",
@@ -61,7 +65,13 @@ async def register_user(
             event_payload={"email": user.email, "merchant_id": str(merchant.id)},
         )
         await db.commit()
-        return user
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            user=UserInToken.model_validate(user),
+            merchant_id=str(merchant.id),
+        )
     except IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -83,7 +93,13 @@ async def login_user(payload: UserLoginRequest, db: AsyncSession = Depends(get_d
         event_payload={"email": user.email},
     )
     await db.commit()
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        user=UserInToken.model_validate(user),
+        merchant_id=str(user.merchant_id) if user.merchant_id else None,
+    )
 
 
 @router.post("/auth/refresh", response_model=TokenResponse)

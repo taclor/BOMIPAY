@@ -2,6 +2,7 @@ from .audit import AuditLog
 from .base import TimestampMixin
 from .merchant import Merchant
 from .provider_account import ProviderAccount
+from .settlement import Settlement
 from .reconciliation import (
     ExpectedPayment,
     ExpectedPaymentImportBatch,
@@ -10,7 +11,6 @@ from .reconciliation import (
     ReconciliationResult,
     ReconciliationRun,
     ReconciliationRunStatus,
-    Settlement,
 )
 from .transaction import Transaction, TransactionStatus
 from .transaction_event import TransactionEvent

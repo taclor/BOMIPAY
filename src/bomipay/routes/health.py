@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 
 from fastapi import APIRouter
@@ -19,6 +20,8 @@ class HealthResponse(BaseModel):
     success: bool = True
     status: str = "ok"
     version: str = APP_VERSION
+    checks: dict = {}
+    timestamp: str = ""
 
 
 class LivenessResponse(BaseModel):
@@ -81,9 +84,14 @@ async def _check_redis() -> tuple[str, dict]:
                 pass
 
 
-@router.get("/health", response_model=HealthResponse, summary="Basic liveness")
+@router.get("/health", response_model=HealthResponse, summary="Full health check")
 async def health_check() -> HealthResponse:
-    return HealthResponse()
+    db_status, _ = await _check_db()
+    redis_status, _ = await _check_redis()
+    return HealthResponse(
+        checks={"database": db_status, "redis": redis_status},
+        timestamp=datetime.now(timezone.utc).isoformat(),
+    )
 
 
 @router.get("/health/live", response_model=LivenessResponse, summary="Liveness probe")

@@ -29,9 +29,9 @@ function HistoryChart({ history }: { history: ProviderHealthHistory }) {
             <XAxis dataKey="date" hide />
             <Area type="monotone" dataKey="reliability" stroke="#10b981" fill="url(#relGrad)" strokeWidth={1.5} dot={false} isAnimationActive={false} />
             <Tooltip
-              contentStyle={{ background: '#111827', border: '1px solid #1f2937', fontSize: 10, borderRadius: 4 }}
-              labelStyle={{ color: '#6b7280' }}
-              itemStyle={{ color: '#10b981' }}
+              contentStyle={{ background: '#FFFFFF', border: '1px solid #E5E7EB', fontSize: 10, borderRadius: 4 }}
+              labelStyle={{ color: '#6B7280' }}
+              itemStyle={{ color: '#059669' }}
               formatter={(v) => [`${Number(v).toFixed(2)}%`, 'Reliability']}
             />
           </AreaChart>
@@ -49,46 +49,46 @@ function ProviderCard({ name }: { name: string }) {
   if (!provider) return null
 
   const statusColors: Record<string, string> = {
-    healthy: 'border-green-600/30',
-    degraded: 'border-yellow-600/30',
-    down: 'border-red-600/30',
-    unknown: 'border-[#1f2937]',
+    healthy: 'border-green-200',
+    degraded: 'border-yellow-200',
+    down: 'border-red-200',
+    unknown: 'border-gray-200',
   }
 
   return (
-    <div className={`bg-[#111827] border rounded p-5 space-y-4 ${statusColors[provider.status] ?? 'border-[#1f2937]'}`}>
+    <div className={`bg-white border rounded-lg p-5 space-y-4 ${statusColors[provider.status] ?? 'border-gray-200'}`}>
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-white">{provider.display_name}</h3>
+        <h3 className="text-base font-semibold text-gray-900">{provider.display_name}</h3>
         <StatusBadge status={provider.status} />
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <div>
           <p className="text-[10px] text-gray-500 uppercase tracking-wider">Reliability</p>
-          <p className="text-xl font-mono font-bold text-white mt-0.5">{bpsToPercent(provider.reliability_bps)}</p>
+          <p className="text-xl font-mono font-bold text-gray-900 mt-0.5">{bpsToPercent(provider.reliability_bps)}</p>
         </div>
         <div>
           <p className="text-[10px] text-gray-500 uppercase tracking-wider">Avg Latency</p>
-          <p className="text-xl font-mono font-bold text-white mt-0.5">{provider.avg_latency_ms}ms</p>
+          <p className="text-xl font-mono font-bold text-gray-900 mt-0.5">{provider.avg_latency_ms}ms</p>
         </div>
         <div>
           <p className="text-[10px] text-gray-500 uppercase tracking-wider">Error Rate</p>
-          <p className="text-xl font-mono font-bold text-white mt-0.5">{bpsToPercent(provider.error_rate_bps)}</p>
+          <p className="text-xl font-mono font-bold text-gray-900 mt-0.5">{bpsToPercent(provider.error_rate_bps)}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 pt-2 border-t border-[#1f2937]">
+      <div className="grid grid-cols-3 gap-3 pt-2 border-t border-gray-100">
         <div>
           <p className="text-[10px] text-gray-500 uppercase tracking-wider">P95 Latency</p>
-          <p className="text-sm font-mono text-gray-300">{provider.p95_latency_ms}ms</p>
+          <p className="text-sm font-mono text-gray-700">{provider.p95_latency_ms}ms</p>
         </div>
         <div>
           <p className="text-[10px] text-gray-500 uppercase tracking-wider">P99 Latency</p>
-          <p className="text-sm font-mono text-gray-300">{provider.p99_latency_ms}ms</p>
+          <p className="text-sm font-mono text-gray-700">{provider.p99_latency_ms}ms</p>
         </div>
         <div>
           <p className="text-[10px] text-gray-500 uppercase tracking-wider">Uptime</p>
-          <p className="text-sm font-mono text-gray-300">{bpsToPercent(provider.uptime_bps)}</p>
+          <p className="text-sm font-mono text-gray-700">{bpsToPercent(provider.uptime_bps)}</p>
         </div>
       </div>
 

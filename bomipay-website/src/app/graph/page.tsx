@@ -56,7 +56,7 @@ function graphToFlow(graph: PaymentGraph): { nodes: Node[]; edges: Edge[] } {
     style: {
       background: `${NODE_COLORS[n.type] ?? '#6b7280'}22`,
       border: `1.5px solid ${NODE_COLORS[n.type] ?? '#6b7280'}`,
-      color: '#f9fafb',
+      color: '#111827',
       fontSize: 11,
       fontFamily: 'monospace',
       borderRadius: 6,
@@ -71,9 +71,9 @@ function graphToFlow(graph: PaymentGraph): { nodes: Node[]; edges: Edge[] } {
     source: e.source,
     target: e.target,
     label: e.label,
-    style: { stroke: '#374151', strokeWidth: 1.5 },
-    labelStyle: { fill: '#6b7280', fontSize: 10, fontFamily: 'monospace' },
-    labelBgStyle: { fill: '#111827', fillOpacity: 0.8 },
+    style: { stroke: '#D1D5DB', strokeWidth: 1.5 },
+    labelStyle: { fill: '#6B7280', fontSize: 10, fontFamily: 'monospace' },
+    labelBgStyle: { fill: '#FFFFFF', fillOpacity: 0.9 },
   }))
 
   return { nodes, edges }
@@ -82,7 +82,7 @@ function graphToFlow(graph: PaymentGraph): { nodes: Node[]; edges: Edge[] } {
 function NodeDetail({ node, graphNode, onClose }: { node: Node; graphNode: GraphNode | undefined; onClose: () => void }) {
   if (!graphNode) return null
   return (
-    <div className="absolute right-4 top-4 w-64 bg-[#111827] border border-[#1f2937] rounded p-4 z-10">
+    <div className="absolute right-4 top-4 w-64 bg-white border border-gray-200 rounded-lg p-4 z-10 shadow-md">
       <div className="flex items-center justify-between mb-3">
         <div>
           <span
@@ -91,9 +91,9 @@ function NodeDetail({ node, graphNode, onClose }: { node: Node; graphNode: Graph
           >
             {graphNode.type}
           </span>
-          <p className="text-xs font-semibold text-white mt-1">{graphNode.label}</p>
+          <p className="text-xs font-semibold text-gray-900 mt-1">{graphNode.label}</p>
         </div>
-        <button onClick={onClose} className="text-gray-500 hover:text-gray-300">
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -101,7 +101,7 @@ function NodeDetail({ node, graphNode, onClose }: { node: Node; graphNode: Graph
         {Object.entries(graphNode.data).map(([k, v]) => (
           <div key={k} className="flex justify-between text-[11px]">
             <span className="text-gray-500 capitalize">{k.replace(/_/g, ' ')}</span>
-            <span className="text-gray-300 font-mono text-right max-w-[120px] truncate">{String(v)}</span>
+            <span className="text-gray-700 font-mono text-right max-w-[120px] truncate">{String(v)}</span>
           </div>
         ))}
       </div>
@@ -150,7 +150,7 @@ export default function GraphPage() {
             value={txnId}
             onChange={(e) => setTxnId(e.target.value)}
             placeholder="Search transaction ID (e.g. TXN-00891)…"
-            className="w-full bg-[#111827] border border-[#1f2937] rounded pl-9 pr-4 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono"
+            className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <button type="submit" className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm transition-colors">
@@ -169,7 +169,7 @@ export default function GraphPage() {
       </div>
 
       {/* Graph */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded overflow-hidden relative" style={{ height: 'calc(100vh - 18rem)' }}>
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden relative" style={{ height: 'calc(100vh - 18rem)' }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -181,7 +181,7 @@ export default function GraphPage() {
           <Background variant={BackgroundVariant.Dots} color="#1f2937" gap={20} size={1} />
           <Controls />
           <MiniMap
-            style={{ background: '#0a0e1a', border: '1px solid #1f2937' }}
+            style={{ background: '#F8FAFC', border: '1px solid #E5E7EB' }}
             nodeColor={(n) => NODE_COLORS[(n.data as { nodeType?: string })?.nodeType ?? ''] ?? '#6b7280'}
           />
         </ReactFlow>

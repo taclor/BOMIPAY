@@ -30,43 +30,43 @@ const ACTION_ICONS: Record<ActionType, React.ReactNode> = {
 }
 
 const ACTION_COLORS: Record<ActionType, string> = {
-  investigate_failed_payment: 'text-red-400 bg-red-500/10 border-red-500/30',
-  upload_bank_statement: 'text-blue-400 bg-blue-500/10 border-blue-500/30',
-  resolve_unmatched_settlement: 'text-orange-400 bg-orange-500/10 border-orange-500/30',
-  acknowledge_incident: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30',
-  open_dispute: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
-  check_provider_sync_failure: 'text-teal-400 bg-teal-500/10 border-teal-500/30',
+  investigate_failed_payment: 'text-red-600 bg-red-50 border-red-200',
+  upload_bank_statement: 'text-blue-600 bg-blue-50 border-blue-200',
+  resolve_unmatched_settlement: 'text-orange-600 bg-orange-50 border-orange-200',
+  acknowledge_incident: 'text-yellow-600 bg-yellow-50 border-yellow-200',
+  open_dispute: 'text-purple-600 bg-purple-50 border-purple-200',
+  check_provider_sync_failure: 'text-teal-600 bg-teal-50 border-teal-200',
 }
 
 function ActionCard({ action }: { action: ActionItem }) {
   const colors = ACTION_COLORS[action.action_type] ?? 'text-gray-400 bg-gray-500/10 border-gray-500/30'
 
   return (
-    <div className={`bg-[#111827] border border-[#1f2937] rounded p-4 flex gap-4 ${action.completed ? 'opacity-50' : ''}`}>
+    <div className={`bg-white border border-gray-200 rounded-lg p-4 flex gap-4 ${action.completed ? 'opacity-50' : ''}`}>
       <div className={`w-8 h-8 rounded border flex items-center justify-center flex-shrink-0 ${colors}`}>
         {ACTION_ICONS[action.action_type]}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <p className={`text-sm font-medium ${action.completed ? 'line-through text-gray-500' : 'text-white'}`}>
+          <p className={`text-sm font-medium ${action.completed ? 'line-through text-gray-400' : 'text-gray-900'}`}>
             {action.title}
           </p>
-          <span className="text-[10px] text-gray-600 font-mono flex-shrink-0">P{action.priority}</span>
+          <span className="text-[10px] text-gray-400 font-mono flex-shrink-0">P{action.priority}</span>
         </div>
         <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">{action.description}</p>
         {action.reference_id && (
           <div className="flex items-center gap-1.5 mt-2">
-            <span className="text-[10px] text-gray-600 uppercase">{action.reference_type}:</span>
-            <span className="text-[10px] text-blue-400 font-mono">{action.reference_id}</span>
+            <span className="text-[10px] text-gray-400 uppercase">{action.reference_type}:</span>
+            <span className="text-[10px] text-blue-600 font-mono">{action.reference_id}</span>
           </div>
         )}
       </div>
       {!action.completed && (
-        <button className="flex-shrink-0 px-3 py-1.5 rounded bg-blue-600/20 border border-blue-600/40 text-blue-400 text-xs hover:bg-blue-600/30 transition-colors self-start">
+        <button className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs hover:bg-blue-700 transition-colors self-start">
           Take Action
         </button>
       )}
-      {action.completed && <CheckSquare className="w-4 h-4 text-green-500 flex-shrink-0 self-start mt-0.5" />}
+      {action.completed && <CheckSquare className="w-4 h-4 text-green-600 flex-shrink-0 self-start mt-0.5" />}
     </div>
   )
 }
@@ -87,20 +87,20 @@ export default function ActionsPage() {
   return (
     <Shell title="Action Center" onRefresh={() => refetch()}>
       {/* Progress */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded p-4 mb-5">
+      <div className="bg-white border border-gray-200 rounded-lg p-4 mb-5">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] text-gray-500 uppercase tracking-wider">Progress</span>
-          <span className="text-xs text-gray-400 font-mono">{data?.completed ?? 0} / {data?.total ?? 0} completed</span>
+          <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Progress</span>
+          <span className="text-xs text-gray-500 font-mono">{data?.completed ?? 0} / {data?.total ?? 0} completed</span>
         </div>
-        <div className="h-1.5 bg-[#1f2937] rounded-full overflow-hidden">
+        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
           <div
             className="h-full bg-green-500 rounded-full transition-all"
             style={{ width: `${data?.total ? (data.completed / data.total) * 100 : 0}%` }}
           />
         </div>
         <div className="flex gap-4 mt-2 text-[10px]">
-          <span className="text-red-400">{data?.pending ?? 0} pending</span>
-          <span className="text-green-400">{data?.completed ?? 0} done</span>
+          <span className="text-red-600">{data?.pending ?? 0} pending</span>
+          <span className="text-green-600">{data?.completed ?? 0} done</span>
         </div>
       </div>
 

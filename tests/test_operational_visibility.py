@@ -28,7 +28,7 @@ async def test_transaction_query_filters_and_detail(client):
 
     reg_response = await client.post("/api/v1/auth/register", json=registration)
     assert reg_response.status_code == 201
-    merchant_id = reg_response.json()["merchant_id"]
+    merchant_id = reg_response.json()["user"]["merchant_id"]
 
     login_response = await client.post(
         "/api/v1/auth/login",
@@ -115,7 +115,7 @@ async def test_alert_acknowledge_and_resolve(client):
 
     reg_response = await client.post("/api/v1/auth/register", json=registration)
     assert reg_response.status_code == 201
-    merchant_id = reg_response.json()["merchant_id"]
+    merchant_id = reg_response.json()["user"]["merchant_id"]
 
     login_response = await client.post(
         "/api/v1/auth/login",
@@ -246,7 +246,7 @@ async def test_notification_retry_logic_is_safe(client, db_session, monkeypatch)
 
     reg_response = await client.post("/api/v1/auth/register", json=registration)
     assert reg_response.status_code == 201
-    merchant_id = reg_response.json()["merchant_id"]
+    merchant_id = reg_response.json()["user"]["merchant_id"]
 
     login_response = await client.post(
         "/api/v1/auth/login",
@@ -367,7 +367,7 @@ async def test_notification_route_and_mark_read(client, db_session):
 
     reg_response = await client.post("/api/v1/auth/register", json=registration)
     assert reg_response.status_code == 201
-    merchant_id = reg_response.json()["merchant_id"]
+    merchant_id = reg_response.json()["user"]["merchant_id"]
 
     login_response = await client.post(
         "/api/v1/auth/login",
@@ -409,7 +409,7 @@ async def test_provider_failure_spike_creates_alert(client):
 
     reg_response = await client.post("/api/v1/auth/register", json=registration)
     assert reg_response.status_code == 201
-    merchant_id = reg_response.json()["merchant_id"]
+    merchant_id = reg_response.json()["user"]["merchant_id"]
 
     login_response = await client.post(
         "/api/v1/auth/login",

@@ -32,61 +32,61 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0e1a] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded bg-blue-600/20 border border-blue-600/40 mb-4">
-            <Activity className="w-6 h-6 text-blue-400" />
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600 mb-4">
+            <Activity className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-xl font-bold text-white tracking-wider uppercase">BomiPay</h1>
-          <p className="text-xs text-gray-500 mt-1 tracking-widest uppercase">Operations Intelligence</p>
+          <h1 className="text-xl font-bold text-gray-900 tracking-wider uppercase">BomiPay</h1>
+          <p className="text-xs text-gray-500 mt-1">Operations Intelligence</p>
         </div>
 
         {/* Card */}
-        <div className="bg-[#111827] border border-[#1f2937] rounded-lg p-6">
-          <h2 className="text-sm font-semibold text-gray-300 mb-6 uppercase tracking-wider">Sign In</h2>
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">Sign In</h2>
 
           {error && (
-            <div className="mb-4 px-3 py-2 bg-red-500/10 border border-red-500/30 rounded text-xs text-red-400">
+            <div className="mb-4 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="ops@merchant.com"
-                  className="w-full bg-[#0a0e1a] border border-[#1f2937] rounded px-9 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono"
+                  className="w-full border border-gray-300 rounded-lg px-9 py-2.5 text-sm text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1.5">Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full bg-[#0a0e1a] border border-[#1f2937] rounded px-9 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono"
+                  className="w-full border border-gray-300 rounded-lg px-9 py-2.5 text-sm text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -94,14 +94,19 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+              className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
-              {loading ? 'Authenticating…' : 'Sign In'}
+              {loading ? 'Signing in…' : 'Sign In'}
             </button>
           </form>
+
+          <p className="text-center text-sm text-gray-500 mt-6">
+            Don&apos;t have an account?{' '}
+            <a href="/signup" className="text-blue-600 hover:text-blue-700 font-medium">Sign up</a>
+          </p>
         </div>
 
-        <p className="text-center text-[10px] text-gray-600 mt-4">
+        <p className="text-center text-xs text-gray-400 mt-4">
           BomiPay OpsIntel v1.0 · Internal Use Only
         </p>
       </div>

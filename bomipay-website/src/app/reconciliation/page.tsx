@@ -77,7 +77,7 @@ export default function ReconciliationPage() {
         <button
           onClick={() => fileRef.current?.click()}
           disabled={upload.isPending}
-          className="flex items-center gap-2 px-3 py-1.5 rounded bg-blue-600/20 border border-blue-600/40 text-blue-400 text-xs hover:bg-blue-600/30 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs hover:bg-blue-700 transition-colors disabled:opacity-50"
         >
           <Upload className="w-3.5 h-3.5" />
           {upload.isPending ? 'Uploading…' : 'Upload Bank Statement'}
@@ -87,24 +87,24 @@ export default function ReconciliationPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Provider Settlements */}
-        <div className="bg-[#111827] border border-[#1f2937] rounded overflow-hidden">
-          <div className="px-4 py-2.5 border-b border-[#1f2937] flex items-center justify-between">
-            <h3 className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Provider Settlements</h3>
-            <span className="text-[10px] text-gray-600">{recon?.length ?? 0} entries</span>
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-gray-200 flex items-center justify-between">
+            <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Provider Settlements</h3>
+            <span className="text-[10px] text-gray-400">{recon?.length ?? 0} entries</span>
           </div>
-          <div className="divide-y divide-[#1f2937]">
+          <div className="divide-y divide-gray-100">
             {(recon ?? []).map((entry) => (
               <div key={entry.id} className="px-4 py-3 flex items-center gap-3">
                 {MATCH_ICONS[entry.match_status]}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-white font-mono">{entry.transaction_id}</span>
+                    <span className="text-xs text-gray-900 font-mono">{entry.transaction_id}</span>
                     <span className="text-[10px] text-gray-500 capitalize">{entry.provider}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <AmountDisplay amount={entry.provider_amount} size="sm" />
                     {entry.difference !== undefined && entry.difference !== 0 && (
-                      <span className="text-[10px] text-red-400 font-mono">
+                      <span className="text-[10px] text-red-600 font-mono">
                         Δ {entry.difference > 0 ? '+' : ''}{(entry.difference / 100).toLocaleString()}
                       </span>
                     )}
@@ -117,20 +117,20 @@ export default function ReconciliationPage() {
         </div>
 
         {/* Bank Statement */}
-        <div className="bg-[#111827] border border-[#1f2937] rounded overflow-hidden">
-          <div className="px-4 py-2.5 border-b border-[#1f2937] flex items-center justify-between">
-            <h3 className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Bank Statement Entries</h3>
-            <span className="text-[10px] text-gray-600">{bank?.length ?? 0} entries</span>
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-gray-200 flex items-center justify-between">
+            <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Bank Statement Entries</h3>
+            <span className="text-[10px] text-gray-400">{bank?.length ?? 0} entries</span>
           </div>
-          <div className="divide-y divide-[#1f2937]">
+          <div className="divide-y divide-gray-100">
             {(bank ?? []).map((entry) => (
               <div key={entry.id} className="px-4 py-3 flex items-center gap-3">
                 {MATCH_ICONS[entry.match_status]}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-white truncate">{entry.description}</p>
+                  <p className="text-xs text-gray-900 truncate">{entry.description}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <AmountDisplay amount={entry.amount} size="sm" />
-                    <span className="text-[10px] text-gray-600 font-mono">{formatDate(entry.date).split(',')[0]}</span>
+                    <span className="text-[10px] text-gray-400 font-mono">{formatDate(entry.date).split(',')[0]}</span>
                   </div>
                 </div>
                 <StatusBadge status={entry.match_status} />

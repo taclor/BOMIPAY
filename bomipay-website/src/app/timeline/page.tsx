@@ -39,7 +39,7 @@ export default function TimelinePage() {
         <select
           value={eventType}
           onChange={(e) => setEventType(e.target.value as TimelineEventType | '')}
-          className="bg-[#111827] border border-[#1f2937] rounded px-3 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-blue-500/50"
+          className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           {EVENT_TYPES.map((t) => (
             <option key={t.value} value={t.value}>{t.label}</option>
@@ -49,7 +49,7 @@ export default function TimelinePage() {
         <select
           value={provider}
           onChange={(e) => setProvider(e.target.value)}
-          className="bg-[#111827] border border-[#1f2937] rounded px-3 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-blue-500/50"
+          className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           {PROVIDERS.map((p) => (
             <option key={p} value={p}>{p || 'All Providers'}</option>
@@ -71,7 +71,7 @@ export default function TimelinePage() {
           <button
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
-            className="px-6 py-2 rounded bg-[#111827] border border-[#1f2937] text-xs text-gray-400 hover:text-gray-200 hover:bg-[#1a2332] disabled:opacity-50 transition-colors"
+            className="px-6 py-2 rounded-lg bg-white border border-gray-200 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-50 transition-colors"
           >
             {isFetchingNextPage ? 'Loading…' : 'Load More Events'}
           </button>

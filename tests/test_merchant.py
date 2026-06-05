@@ -20,7 +20,7 @@ async def test_merchant_profile_and_provider_account_lifecycle(client):
     reg_resp = await client.post("/api/v1/auth/register", json=registration)
     assert reg_resp.status_code == 201
     user_payload = reg_resp.json()
-    assert user_payload["email"] == registration["email"]
+    assert user_payload["user"]["email"] == registration["email"]
 
     login_resp = await client.post(
         "/api/v1/auth/login",

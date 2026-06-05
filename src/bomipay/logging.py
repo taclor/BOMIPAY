@@ -5,6 +5,30 @@ from typing import Any
 
 from pythonjsonlogger import jsonlogger
 
+_SENSITIVE_KEYS: frozenset[str] = frozenset(
+    {
+        "secret_key",
+        "api_key",
+        "password",
+        "token",
+        "authorization",
+        "secret",
+        "private_key",
+        "access_token",
+        "refresh_token",
+    }
+)
+
+
+class SensitiveDataFilter(logging.Filter):
+    """Mask sensitive fields in log records before they are emitted."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        for attr in list(vars(record).keys()):
+            if attr.lower() in _SENSITIVE_KEYS:
+                setattr(record, attr, "***")
+        return True
+
 # Context variables propagated automatically through async call chains.
 _correlation_id_var: contextvars.ContextVar[str] = contextvars.ContextVar(
     "correlation_id", default=""
@@ -100,6 +124,7 @@ def configure_logging() -> None:
         "%(asctime)s %(levelname)s %(name)s %(message)s"
     )
     handler.setFormatter(formatter)
+    handler.addFilter(SensitiveDataFilter())
     root_logger.addHandler(handler)
     root_logger.setLevel(logging.INFO)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)

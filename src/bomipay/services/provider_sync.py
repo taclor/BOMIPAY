@@ -12,15 +12,14 @@ from ..models.transaction import Transaction, TransactionStatus
 from ..services.providers import ProviderAdapterRegistry
 from ..services.encryption import decrypt_secret
 from ..services.provider_normalize import ProviderNormalizer
+from ..services.settlement import upsert_settlement
 from ..services.provider_adapters_async import (
     ProviderError,
     ProviderTimeoutError,
     ProviderRateLimitError,
     ProviderAuthError,
 )
-from ..services.paystack_adapter_new import PaystackAdapter
-from ..services.flutterwave_adapter_new import FlutterwaveAdapter
-from ..services.monnify_adapter_new import MonnifyAdapter
+from ..services.adapters.registry import get_adapter as _get_new_adapter
 
 logger = logging.getLogger("bomipay")
 
@@ -90,14 +89,7 @@ class ProviderSyncService:
     @staticmethod
     def _get_adapter(provider_name: str, api_key: str, secret_key: str = ""):
         """Get the appropriate adapter for the provider."""
-        if provider_name == "paystack":
-            return PaystackAdapter(api_key=api_key)
-        elif provider_name == "flutterwave":
-            return FlutterwaveAdapter(api_key=api_key)
-        elif provider_name == "monnify":
-            return MonnifyAdapter(api_key=api_key, secret_key=secret_key)
-        else:
-            raise ValueError(f"Unsupported provider: {provider_name}")
+        return _get_new_adapter(provider_name, api_key=api_key, secret_key=secret_key or None)
 
     @staticmethod
     async def create_job(
@@ -148,14 +140,14 @@ class ProviderSyncService:
         failure_details = []
 
         try:
-            raw_transactions = await adapter.fetch_transactions(date_from, date_to)
-            records_seen = len(raw_transactions)
+            adapter_transactions = await adapter.fetch_transactions(date_from, date_to)
+            records_seen = len(adapter_transactions)
 
-            for raw_txn in raw_transactions:
+            for adapter_txn in adapter_transactions:
                 try:
-                    # Normalize transaction
+                    # Use raw_payload so existing ProviderNormalizer logic is preserved
                     normalized = ProviderNormalizer.normalize_transaction(
-                        provider_account.provider_name, raw_txn
+                        provider_account.provider_name, adapter_txn.raw_payload
                     )
 
                     provider_txn_id = normalized["provider_transaction_id"]
@@ -197,7 +189,7 @@ class ProviderSyncService:
                 except Exception as e:
                     failure_details.append(
                         {
-                            "record_id": raw_txn.get("id") or raw_txn.get("reference"),
+                            "record_id": adapter_txn.provider_transaction_id,
                             "error": str(e)[:255],
                             "severity": "warning",
                         }
@@ -227,22 +219,32 @@ class ProviderSyncService:
         failure_details = []
 
         try:
-            raw_settlements = await adapter.fetch_settlements(date_from, date_to)
-            records_seen = len(raw_settlements)
+            adapter_settlements = await adapter.fetch_settlements(date_from, date_to)
+            records_seen = len(adapter_settlements)
 
-            for raw_settlement in raw_settlements:
+            for adapter_settlement in adapter_settlements:
                 try:
                     normalized = ProviderNormalizer.normalize_settlement(
-                        provider_account.provider_name, raw_settlement
+                        provider_account.provider_name, adapter_settlement.raw_payload
                     )
-                    # Store settlement data in raw_response for now
-                    # TODO: Create Settlement model if needed
+                    await upsert_settlement(
+                        db=db,
+                        merchant_id=str(provider_account.merchant_id),
+                        provider_name=provider_account.provider_name,
+                        reference=normalized.get("settlement_reference") or adapter_settlement.provider_settlement_id,
+                        amount_minor=normalized.get("amount", 0),
+                        currency=normalized.get("currency", "NGN"),
+                        status=normalized.get("status", "settled"),
+                        settled_at=normalized.get("settled_at"),
+                        expected_arrival_at=normalized.get("expected_arrival_at"),
+                        raw_payload=adapter_settlement.raw_payload,
+                        provider_account_id=str(provider_account.id),
+                    )
                     records_created += 1
                 except Exception as e:
                     failure_details.append(
                         {
-                            "record_id": raw_settlement.get("id")
-                            or raw_settlement.get("reference"),
+                            "record_id": adapter_settlement.provider_settlement_id,
                             "error": str(e)[:255],
                             "severity": "warning",
                         }
@@ -272,7 +274,6 @@ class ProviderSyncService:
         try:
             raw_transfers = await adapter.fetch_transfers(date_from, date_to)
             records_seen = len(raw_transfers)
-
             for raw_transfer in raw_transfers:
                 try:
                     normalized = ProviderNormalizer.normalize_transfer(
@@ -310,7 +311,7 @@ class ProviderSyncService:
         failure_details = []
 
         try:
-            raw_refunds = await adapter.fetch_refunds(transaction_id)
+            raw_refunds = await adapter.fetch_refunds()
             records_seen = len(raw_refunds)
 
             for raw_refund in raw_refunds:
@@ -397,7 +398,13 @@ class ProviderSyncService:
 
             elif job.sync_type == "provider_health":
                 health = await adapter.get_provider_health()
-                raw_response = health
+                # Convert ProviderHealthStatus dataclass to serialisable dict
+                raw_response = {
+                    "status": "ok" if health.is_healthy else "degraded",
+                    "latency_ms": health.latency_ms,
+                    "timestamp": health.last_checked_at.isoformat(),
+                    "error": health.error_message,
+                }
                 records_seen = 1
 
             else:

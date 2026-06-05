@@ -6,18 +6,29 @@ export interface LoginRequest {
   password: string
 }
 
-export interface LoginResponse {
-  access_token: string
-  token_type: string
-  user: User
+export interface RegisterRequest {
+  full_name: string
+  email: string
+  phone: string
+  password: string
+  merchant_name?: string
+  business_type?: string
+  country?: string
 }
 
 export interface User {
   id: string
   email: string
-  name: string
+  full_name: string
   role: string
-  merchant_id: string
+  merchant_id?: string | null
+}
+
+export interface LoginResponse {
+  access_token: string
+  refresh_token?: string
+  token_type: string
+  user?: User
 }
 
 // ──────────────────────────────────────────────

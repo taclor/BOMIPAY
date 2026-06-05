@@ -1,3 +1,6 @@
+# DEPRECATED: Use src.bomipay.services.adapters instead
+# This module is kept for backwards compatibility; new code should import from
+# bomipay.services.adapters (e.g. ``from bomipay.services.adapters import get_adapter``).
 import hmac
 import hashlib
 import json
