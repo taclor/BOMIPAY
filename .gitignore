@@ -1,18 +1,83 @@
+# Python
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-*.sqlite3
-*.db
+*.egg-info/
+dist/
+build/
+
+# Environment & Secrets
 .env
 .env.local
 .env.*.local
+*.pem
+*.key
+*.keystore
+.DS_Store
+
+# Virtual environments
 .venv/
 .venv*/
-dist/
-build/
-*.egg-info/
-htmlcov/
+venv/
+ENV/
+env/
+
+# Databases
+*.sqlite3
+*.db
+*.sqlite
+alembic_test.db
+test.db
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Test & Coverage
 .pytest_cache/
 coverage.xml
+htmlcov/
+.coverage
+.coverage.*
+
+# Logs
 *.log
+*.log.*
+
+# Frontend build outputs
+node_modules/
+.next/
+out/
+build/
+dist/
+.nuxt/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+
+# Redis
+*.rdb
+dump.rdb
+
+# Docker
+.dockerignore
+
+# Package managers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
