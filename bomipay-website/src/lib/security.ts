@@ -98,7 +98,7 @@ export function maskMerchantId(id: string | null | undefined): string {
   return `${id.slice(0, 3)}•••••••${id.slice(-4)}`
 }
 
-export default {
+const security = {
   maskAccountNumber,
   maskPhoneNumber,
   maskEmail,
@@ -106,3 +106,5 @@ export default {
   sanitizeBankDescription,
   maskMerchantId,
 }
+
+export default security

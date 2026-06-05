@@ -1,0 +1,245 @@
+﻿INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 0001_initial, Initial schema
+INFO  [alembic.runtime.migration] Running upgrade 0001_initial -> 0002_provider_accounts, Add provider account table
+INFO  [alembic.runtime.migration] Running upgrade 0002_provider_accounts -> 0003_transactions, Add transactions and transaction events tables
+INFO  [alembic.runtime.migration] Running upgrade 0003_transactions -> 0004_alerts, Add alerts table
+INFO  [alembic.runtime.migration] Running upgrade 0004_alerts -> 0005_notifications_and_alert_extensions, Add notifications table and extend alert metadata
+.venv\Scripts\python.exe : Traceback (most recent call last):
+In Zeile:2 Zeichen:113
++ ... 3/bomipay"; .venv\Scripts\python.exe -m alembic upgrade heads 2>&1 |  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 550, in 
+_prepare_and_execute
+    self._rows = deque(await prepared_stmt.fetch(*parameters))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\asyncpg\prepared_stmt.py", line 177, in fetch
+    data = await self.__bind_execute(args, 0, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\asyncpg\prepared_stmt.py", line 268, in __bind_execute
+    data, status, _ = await self.__do_execute(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+        lambda protocol: protocol.bind_execute(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            self._state, args, '', limit, True, timeout))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\asyncpg\prepared_stmt.py", line 257, in __do_execute
+    return await executor(protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 205, in bind_execute
+asyncpg.exceptions.StringDataRightTruncationError: value too long for type character varying(32)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in 
+_exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 585, in 
+execute
+    self._adapt_connection.await_(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._prepare_and_execute(operation, parameters)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 132, in 
+await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 196, in 
+greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 563, in 
+_prepare_and_execute
+    self._handle_exception(error)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 513, in 
+_handle_exception
+    self._adapt_connection._handle_exception(error)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 797, in 
+_handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.Error: <class 
+'asyncpg.exceptions.StringDataRightTruncationError'>: value too long for type character varying(32)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\alembic\__main__.py", line 4, in <module>
+    main(prog="alembic")
+    ~~~~^^^^^^^^^^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\alembic\config.py", line 1047, in main
+    CommandLine(prog=prog).main(argv=argv)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\alembic\config.py", line 1037, in main
+    self.run_cmd(cfg, options)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\alembic\config.py", line 971, in run_cmd
+    fn(
+    ~~^
+        config,
+        ^^^^^^^
+        *[getattr(options, k, None) for k in positional],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        **{k: getattr(options, k, None) for k in kwarg},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\alembic\command.py", line 483, in upgrade
+    script.run_env()
+    ~~~~~~~~~~~~~~^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\alembic\script\base.py", line 545, in run_env
+    util.load_python_file(self.dir, "env.py")
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\alembic\util\pyfiles.py", line 116, in load_python_file
+    module = load_module_py(module_id, path)
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\alembic\util\pyfiles.py", line 136, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 762, in exec_module
+  File "<frozen importlib._bootstrap>", line 491, in _call_with_frames_removed
+  File "D:\DEV_CONTAINERS\BOMIPAY\alembic\env.py", line 66, in <module>
+    asyncio.run(run_async_migrations())
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ernes\AppData\Local\Programs\Python\Python314\Lib\asyncio\runners.py", line 204, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\ernes\AppData\Local\Programs\Python\Python314\Lib\asyncio\runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\ernes\AppData\Local\Programs\Python\Python314\Lib\asyncio\base_events.py", line 719, in 
+run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\alembic\env.py", line 58, in run_async_migrations
+    await connection.run_sync(do_run_migrations)
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\ext\asyncio\engine.py", line 888, in run_sync
+    return await greenlet_spawn(
+           ^^^^^^^^^^^^^^^^^^^^^
+        fn, self._proxied, *arg, _require_await=False, **kw
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 203, in 
+greenlet_spawn
+    result = context.switch(value)
+  File "D:\DEV_CONTAINERS\BOMIPAY\alembic\env.py", line 49, in do_run_migrations
+    context.run_migrations()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "<string>", line 8, in run_migrations
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\alembic\runtime\environment.py", line 969, in run_migrations
+    self.get_context().run_migrations(**kw)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\alembic\runtime\migration.py", line 633, in run_migrations
+    head_maintainer.update_to_step(step)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\alembic\runtime\migration.py", line 817, in update_to_step
+    self._update_version(from_, to_)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\alembic\runtime\migration.py", line 752, in _update_version
+    ret = self.context.impl._exec(
+        self.context._version.update()
+    ...<4 lines>...
+        )
+    )
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\alembic\ddl\impl.py", line 256, in _exec
+    return conn.execute(construct, params)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 527, in 
+_execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in 
+_execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in 
+_exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2363, in 
+_handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in 
+_exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 585, in 
+execute
+    self._adapt_connection.await_(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._prepare_and_execute(operation, parameters)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 132, in 
+await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 196, in 
+greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 563, in 
+_prepare_and_execute
+    self._handle_exception(error)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 513, in 
+_handle_exception
+    self._adapt_connection._handle_exception(error)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 797, in 
+_handle_exception
+    raise translated_error from error
+sqlalchemy.exc.DBAPIError: (sqlalchemy.dialects.postgresql.asyncpg.Error) <class 
+'asyncpg.exceptions.StringDataRightTruncationError'>: value too long for type character varying(32)
+[SQL: UPDATE alembic_version SET version_num='0005_notifications_and_alert_extensions' WHERE 
+alembic_version.version_num = '0004_alerts']
+(Background on this error at: https://sqlalche.me/e/20/dbapi)

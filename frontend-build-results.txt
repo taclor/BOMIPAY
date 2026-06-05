@@ -1,0 +1,38 @@
+﻿
+> bomipay-website@0.1.0 build
+> next build
+
+Ôû▓ Next.js 16.2.7 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 10.6s
+  Running TypeScript ...
+  Finished TypeScript in 12.0s ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/16) ...
+  Generating static pages using 15 workers (4/16) 
+  Generating static pages using 15 workers (8/16) 
+  Generating static pages using 15 workers (12/16) 
+Ô£ô Generating static pages using 15 workers (16/16) in 770ms
+  Finalizing page optimization ...
+
+Route (app)
+Ôöî Ôùï /
+Ôö£ Ôùï /_not-found
+Ôö£ Ôùï /actions
+Ôö£ Ôùï /ai
+Ôö£ Ôùï /dashboard
+Ôö£ Ôùï /graph
+Ôö£ Ôùï /incidents
+Ôö£ Ôùï /login
+Ôö£ Ôùï /onboarding
+Ôö£ Ôùï /providers
+Ôö£ Ôùï /providers/connect
+Ôö£ Ôùï /reconciliation
+Ôö£ Ôùï /signup
+Ôöö Ôùï /timeline
+
+
+Ôùï  (Static)  prerendered as static content
+

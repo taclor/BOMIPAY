@@ -32,7 +32,10 @@ export default function ProvidersPage() {
   }
 
   useEffect(() => {
-    loadProviders()
+    const load = async () => {
+      await loadProviders()
+    }
+    load()
   }, [])
 
   const handleDisconnected = () => {

@@ -1,0 +1,58 @@
+﻿
+> bomipay-website@0.1.0 lint
+> eslint
+
+
+D:\DEV_CONTAINERS\BOMIPAY\bomipay-website\e2e\full-journey.spec.ts
+  296:11  warning  'hasAuthCookie' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\DEV_CONTAINERS\BOMIPAY\bomipay-website\src\app\actions\page.tsx
+  9:7  warning  'MOCK_ACTIONS' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\DEV_CONTAINERS\BOMIPAY\bomipay-website\src\app\graph\page.tsx
+  29:7  warning  'MOCK_GRAPH' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\DEV_CONTAINERS\BOMIPAY\bomipay-website\src\app\onboarding\page.tsx
+   82:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+   85:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\DEV_CONTAINERS\BOMIPAY\bomipay-website\src\app\onboarding\page.tsx:85:7
+  83 |     const merchantIdFromStorage = localStorage.getItem('merchant_id')
+  84 |     if (merchantIdFromStorage) {
+> 85 |       setMerchantId(merchantIdFromStorage)
+     |       ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  86 |     }
+  87 |   }, [])
+  88 |  react-hooks/set-state-in-effect
+  144:14  warning  '_err' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+
+D:\DEV_CONTAINERS\BOMIPAY\bomipay-website\src\app\reconciliation\page.tsx
+  13:7  warning  'MOCK_RECON' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  20:7  warning  'MOCK_BANK' is assigned a value but never used   @typescript-eslint/no-unused-vars
+
+D:\DEV_CONTAINERS\BOMIPAY\bomipay-website\src\hooks\useDashboard.ts
+  11:7  warning  'MOCK_SUMMARY' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  23:7  warning  'MOCK_METRICS' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  38:7  warning  'MOCK_PROVIDERS' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  44:7  warning  'MOCK_ACTIVITIES' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  52:7  warning  'MOCK_AI_SUMMARY' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\DEV_CONTAINERS\BOMIPAY\bomipay-website\src\hooks\useIncidents.ts
+  5:7  warning  'MOCK_INCIDENTS' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\DEV_CONTAINERS\BOMIPAY\bomipay-website\src\hooks\useProviderHealth.ts
+   5:7  warning  'MOCK_METRICS' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  55:7  warning  'MOCK_HISTORY' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\DEV_CONTAINERS\BOMIPAY\bomipay-website\src\hooks\useTimeline.ts
+  13:7  warning  'MOCK_EVENTS' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+Ô£û 17 problems (1 error, 16 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

@@ -1,0 +1,88 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.14.0, pytest-9.0.3, pluggy-1.6.0
+rootdir: D:\DEV_CONTAINERS\BOMIPAY
+configfile: pytest.ini
+plugins: anyio-4.13.0, asyncio-1.3.0, respx-0.23.1
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 555 items
+
+tests\test_action_center.py ..............                               [  2%]
+tests\test_admin_operations.py .........................                 [  7%]
+tests\test_ai_assistant.py ....................                          [ 10%]
+tests\test_ai_safety.py .......................                          [ 14%]
+tests\test_analytics.py .........                                        [ 16%]
+tests\test_async_jobs.py ........................                        [ 20%]
+tests\test_auth.py ........                                              [ 22%]
+tests\test_auth_extended.py ........                                     [ 23%]
+tests\test_bank_accounts.py ........                                     [ 25%]
+tests\test_bank_statements.py ........                                   [ 26%]
+tests\test_dashboard.py .........                                        [ 28%]
+tests\test_data_sources.py .......                                       [ 29%]
+tests\test_error_handling.py ..................                          [ 32%]
+tests\test_event_bus.py .............................                    [ 37%]
+tests\test_flutterwave_adapter_staging.py ....................           [ 41%]
+tests\test_incidents.py ..............                                   [ 43%]
+tests\test_ledger.py .......................                             [ 48%]
+tests\test_merchant.py ...                                               [ 48%]
+tests\test_money_at_risk.py ..................                           [ 51%]
+tests\test_monnify_adapter_staging.py ..................                 [ 55%]
+tests\test_observability.py ............                                 [ 57%]
+tests\test_operational_visibility.py .......                             [ 58%]
+tests\test_payment_graph.py ...........                                  [ 60%]
+tests\test_paystack_adapter_staging.py .......................           [ 64%]
+tests\test_performance.py ..........                                     [ 66%]
+tests\test_performance_endpoints.py ...........                          [ 68%]
+tests\test_provider_adapters.py ............................             [ 73%]
+tests\test_provider_error_classification.py ..................           [ 76%]
+tests\test_provider_health.py ...........................                [ 81%]
+tests\test_provider_normalize_contract.py .........................      [ 86%]
+tests\test_provider_sync.py ........                                     [ 87%]
+tests\test_providers.py ...                                              [ 88%]
+tests\test_reconciliation.py ...........                                 [ 90%]
+tests\test_reconciliation_extended.py .......                            [ 91%]
+tests\test_security.py ......................                            [ 95%]
+tests\test_settlements.py ....                                           [ 96%]
+tests\test_timeline.py .............                                     [ 98%]
+tests\test_transactions_extended.py ........                             [ 99%]
+tests\test_webhook.py .                                                  [100%]
+
+============================== warnings summary ===============================
+.venv\Lib\site-packages\pythonjsonlogger\jsonlogger.py:11
+  D:\DEV_CONTAINERS\BOMIPAY\.venv\Lib\site-packages\pythonjsonlogger\jsonlogger.py:11: DeprecationWarning: pythonjsonlogger.jsonlogger has been moved to pythonjsonlogger.json
+    warnings.warn(
+
+src\bomipay\routes\provider_health.py:18
+src\bomipay\routes\provider_health.py:18
+  D:\DEV_CONTAINERS\BOMIPAY\src\bomipay\routes\provider_health.py:18: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class HealthMetricResponse(BaseModel):
+
+src\bomipay\routes\provider_health.py:35
+src\bomipay\routes\provider_health.py:35
+  D:\DEV_CONTAINERS\BOMIPAY\src\bomipay\routes\provider_health.py:35: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class ProviderHealthResponse(BaseModel):
+
+tests/test_operational_visibility.py::test_alert_acknowledge_and_resolve
+  D:\DEV_CONTAINERS\BOMIPAY\src\bomipay\routes\alerts.py:80: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    alert.acknowledged_at = datetime.utcnow()
+
+tests/test_operational_visibility.py::test_alert_acknowledge_and_resolve
+  D:\DEV_CONTAINERS\BOMIPAY\src\bomipay\routes\alerts.py:102: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    alert.resolved_at = datetime.utcnow()
+
+tests/test_provider_health.py::test_get_provider_health_summary_with_data
+  D:\DEV_CONTAINERS\BOMIPAY\src\bomipay\routes\provider_health.py:72: PydanticDeprecatedSince20: The `from_orm` method is deprecated; set `model_config['from_attributes']=True` and use `model_validate` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    return [HealthMetricResponse.from_orm(m) for m in metrics]
+
+tests/test_provider_health.py::test_get_provider_health_history
+tests/test_provider_health.py::test_get_provider_health_history
+tests/test_provider_health.py::test_get_provider_health_history
+  D:\DEV_CONTAINERS\BOMIPAY\src\bomipay\routes\provider_health.py:141: PydanticDeprecatedSince20: The `from_orm` method is deprecated; set `model_config['from_attributes']=True` and use `model_validate` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    return [HealthMetricResponse.from_orm(m) for m in metrics]
+
+tests/test_provider_health.py::test_calculate_provider_health_endpoint
+tests/test_provider_health.py::test_calculate_provider_health_endpoint_with_date
+  D:\DEV_CONTAINERS\BOMIPAY\src\bomipay\routes\provider_health.py:160: PydanticDeprecatedSince20: The `from_orm` method is deprecated; set `model_config['from_attributes']=True` and use `model_validate` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    return HealthMetricResponse.from_orm(metric)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================ 555 passed, 13 warnings in 310.97s (0:05:10) =================

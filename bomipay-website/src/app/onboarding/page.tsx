@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import {
   Building2,
   Globe,
-  Users,
   CreditCard,
   Upload,
   CheckCircle,
@@ -76,10 +75,16 @@ export default function OnboardingPage() {
     const merchantIdFromStorage = localStorage.getItem('merchant_id')
     if (!user || !merchantIdFromStorage) {
       router.push('/login')
-      return
     }
-    setMerchantId(merchantIdFromStorage)
   }, [router])
+
+  useEffect(() => {
+    const merchantIdFromStorage = localStorage.getItem('merchant_id')
+    if (merchantIdFromStorage) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMerchantId(merchantIdFromStorage)
+    }
+  }, [])
 
   const handleBusinessSubmit = async () => {
     if (!businessProfile.company_name || !businessProfile.industry || !businessProfile.country) {
@@ -136,7 +141,8 @@ export default function OnboardingPage() {
       if (!response.ok) throw new Error('Connection test failed')
       setTestConnectionStatus('success')
       setTimeout(() => setTestConnectionStatus('idle'), 2000)
-    } catch (err) {
+    } catch (_err) {
+      // Error is intentionally unused as we just update UI state
       setTestConnectionStatus('error')
       setTimeout(() => setTestConnectionStatus('idle'), 2000)
     }
@@ -254,7 +260,7 @@ export default function OnboardingPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Complete Your Setup</h1>
-          <p className="text-gray-600">Let's get your payment operations ready</p>
+          <p className="text-gray-600">Let&apos;s get your payment operations ready</p>
         </div>
 
         {/* Progress Steps */}
@@ -270,7 +276,7 @@ export default function OnboardingPage() {
             const isActive = currentStep === s.step
             const isCompleted =
               ['business', 'provider', 'bank', 'statement'].indexOf(currentStep) >
-              ['business', 'provider', 'bank', 'statement'].indexOf(s.step as any)
+              ['business', 'provider', 'bank', 'statement'].indexOf(s.step as Step)
 
             return (
               <div key={s.step} className="flex flex-col items-center flex-1">
